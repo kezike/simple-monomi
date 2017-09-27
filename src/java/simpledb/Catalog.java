@@ -17,6 +17,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Threadsafe
  */
 public class Catalog {
+    
+    private ArrayList<Integer> tableIds;
+    private ConcurrentHashMap<Integer, String> idToPKey;
+    private ConcurrentHashMap<String, String> pKeyToName;
+    private ConcurrentHashMap<Integer, String> idToName;
+    private ConcurrentHashMap<String, DbFile> nameToTable;
 
     /**
      * Constructor.
@@ -24,6 +30,11 @@ public class Catalog {
      */
     public Catalog() {
         // some code goes here
+        this.tableIds = new ArrayList<Integer>();
+        this.idToPKey = new ConcurrentHashMap<Integer, String>();
+        this.pKeyToName = new ConcurrentHashMap<String, String>();
+        this.idToName = new ConcurrentHashMap<Integer, String>();
+        this.nameToTable = new ConcurrentHashMap<String, DbFile>();
     }
 
     /**
@@ -37,10 +48,33 @@ public class Catalog {
      */
     public void addTable(DbFile file, String name, String pkeyField) {
         // some code goes here
+        DbFile prevTable = this.nameToTable.put(name, file);
+        if (prevTable != null) {
+          this.tableIds.remove(new Integer(prevTable.getId()));
+          this.idToPKey.remove(new Integer(prevTable.getId()));
+          this.idToName.remove(new Integer(prevTable.getId()));
+          this.nameToTable.remove(name);
+          String prevPKey = "";
+          Set<Map.Entry<String, String>> pKeyToNameEntrySet = this.pKeyToName.entrySet();
+          for (Map.Entry<String, String> pKeyToNameEntry : pKeyToNameEntrySet) {
+            String entryPKey = pKeyToNameEntry.getKey();
+            String entryName = pKeyToNameEntry.getValue();
+            if (entryName.equals(name)) {
+              prevPKey = entryPKey;
+              break;
+            }
+          }
+          this.pKeyToName.remove(prevPKey);
+        }
+        this.tableIds.add(new Integer(file.getId()));
+        this.idToPKey.put(new Integer(file.getId()), pkeyField);
+        this.pKeyToName.put(pkeyField, name);
+        this.idToName.put(new Integer(file.getId()), name);
+        this.nameToTable.put(name, file);
     }
 
     public void addTable(DbFile file, String name) {
-        addTable(file, name, "");
+        this.addTable(file, name, "");
     }
 
     /**
@@ -51,7 +85,7 @@ public class Catalog {
      *    this file/tupledesc param for the calls getTupleDesc and getFile
      */
     public void addTable(DbFile file) {
-        addTable(file, (UUID.randomUUID()).toString());
+        this.addTable(file, (UUID.randomUUID()).toString());
     }
 
     /**
@@ -60,7 +94,16 @@ public class Catalog {
      */
     public int getTableId(String name) throws NoSuchElementException {
         // some code goes here
-        return 0;
+        if (name == null) {
+          String errMsg = String.format("No table with null name value resides in this database");
+          throw new NoSuchElementException(errMsg);
+        }
+        DbFile file = this.nameToTable.get(name);
+        if (file == null) {
+          String errMsg = String.format("No table named '" + name + "' resides in this database");
+          throw new NoSuchElementException(errMsg);
+        }
+        return file.getId();
     }
 
     /**
@@ -71,7 +114,11 @@ public class Catalog {
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
         // some code goes here
-        return null;
+        /*if (tableid == null) {
+          String errMsg = String.format("No table with null id value resides in this database");
+          throw new NoSuchElementException(errMsg);
+        }*/
+        return this.getDatabaseFile(tableid).getTupleDesc();
     }
 
     /**
@@ -82,27 +129,38 @@ public class Catalog {
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
         // some code goes here
-        return null;
+        /*if (tableid == null) {
+          String errMsg = String.format("No table with null id value resides in this database");
+          throw new NoSuchElementException(errMsg);
+        }*/
+        String tableName = this.idToName.get(new Integer(tableid));
+        DbFile table = this.nameToTable.get(tableName);
+        return table;
     }
 
     public String getPrimaryKey(int tableid) {
         // some code goes here
-        return null;
+        return this.idToPKey.get(new Integer(tableid));
     }
 
     public Iterator<Integer> tableIdIterator() {
         // some code goes here
-        return null;
+        return this.tableIds.iterator();
     }
 
     public String getTableName(int id) {
         // some code goes here
-        return null;
+        return this.idToName.get(new Integer(id));
     }
     
     /** Delete all tables from the catalog */
     public void clear() {
         // some code goes here
+        this.tableIds = new ArrayList<Integer>();
+        this.idToPKey = new ConcurrentHashMap<Integer, String>();
+        this.pKeyToName = new ConcurrentHashMap<String, String>();
+        this.idToName = new ConcurrentHashMap<Integer, String>();
+        this.nameToTable = new ConcurrentHashMap<String, DbFile>();
     }
     
     /**

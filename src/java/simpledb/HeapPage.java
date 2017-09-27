@@ -41,19 +41,19 @@ public class HeapPage implements Page {
     public HeapPage(HeapPageId id, byte[] data) throws IOException {
         this.pid = id;
         this.td = Database.getCatalog().getTupleDesc(id.getTableId());
-        this.numSlots = getNumTuples();
+        this.numSlots = this.getNumTuples();
         DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
 
         // allocate and read the header slots of this page
-        header = new byte[getHeaderSize()];
-        for (int i=0; i<header.length; i++)
-            header[i] = dis.readByte();
+        this.header = new byte[this.getHeaderSize()];
+        for (int i = 0; i < this.header.length; i++)
+            this.header[i] = dis.readByte();
         
-        tuples = new Tuple[numSlots];
+        this.tuples = new Tuple[numSlots];
         try{
             // allocate and read the actual records of this page
-            for (int i=0; i<tuples.length; i++)
-                tuples[i] = readNextTuple(dis,i);
+            for (int i = 0; i < this.tuples.length; i++)
+                this.tuples[i] = this.readNextTuple(dis,i);
         }catch(NoSuchElementException e){
             e.printStackTrace();
         }
@@ -67,8 +67,10 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         // some code goes here
-        return 0;
-
+        int tupleSize = this.td.getSize();
+        int pageSize = BufferPool.getPageSize();
+        int numTuples = (pageSize * 8) / (tupleSize * 8 + 1);
+        return numTuples;
     }
 
     /**
@@ -76,10 +78,9 @@ public class HeapPage implements Page {
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
     private int getHeaderSize() {        
-        
         // some code goes here
-        return 0;
-                 
+        int numTuples = this.getNumTuples();
+        return (int) Math.ceil(numTuples / 8.0);
     }
     
     /** Return a view of this page before it was modified
@@ -111,8 +112,8 @@ public class HeapPage implements Page {
      * @return the PageId associated with this page.
      */
     public HeapPageId getId() {
-    // some code goes here
-    throw new UnsupportedOperationException("implement this");
+        // some code goes here
+        return this.pid;
     }
 
     /**
@@ -282,7 +283,26 @@ public class HeapPage implements Page {
      */
     public int getNumEmptySlots() {
         // some code goes here
-        return 0;
+        /*byte pageUsage = header[this.pid.getPageNumber()];
+        int numEmptySlots = 0;
+        int bitIdx = 0;
+        while (bitIdx < 8) {
+          byte pageUsageCopy = pageUsage;
+          pageUsageCopy &= 1;
+          if (pageUsageCopy == 0) {
+            numEmptySlots += 1;
+          }
+          pageUsage >>>= 1;
+          bitIdx += 1;
+        }*/
+        int numTuples = this.getNumTuples();
+        int numEmptySlots = 0;
+        for (int i = 0; i < numTuples; i++) {
+          if (!this.isSlotUsed(i)) {
+            numEmptySlots++;
+          }
+        }
+        return numEmptySlots;
     }
 
     /**
@@ -290,7 +310,12 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
-        return false;
+        byte headerByte = header[i/8];
+        byte headerMask = (byte)(0x01 << (i % 8));
+        headerMask &= headerByte;
+        headerMask >>>= (i % 8);
+        headerMask &= 1;
+        return headerMask == 0x01;
     }
 
     /**
@@ -302,12 +327,34 @@ public class HeapPage implements Page {
     }
 
     /**
+     * @return the tuples on this page
+     */
+    public List<Tuple> getValidTuples() {
+        int numTuples = this.getNumTuples();
+        ArrayList<Tuple> newTuples = new ArrayList<Tuple>();
+        for (int i = 0; i < numTuples; i++) {
+          if (this.isSlotUsed(i)) {
+            newTuples.add(this.tuples[i]);
+          }
+        }
+        return new ArrayList<>(newTuples);
+    }
+
+    /**
      * @return an iterator over all tuples on this page (calling remove on this iterator throws an UnsupportedOperationException)
      * (note that this iterator shouldn't return tuples in empty slots!)
      */
     public Iterator<Tuple> iterator() {
         // some code goes here
-        return null;
+        /*int numTuples = this.getNumTuples();
+        ArrayList<Tuple> newTuples = new ArrayList<Tuple>();
+        for (int i = 0; i < numTuples; i++) {
+          if (this.isSlotUsed(i)) {
+            newTuples.add(this.tuples[i]);
+          }
+        }
+        return newTuples.iterator();*/
+        return this.getValidTuples().iterator();
     }
 
 }

@@ -26,6 +26,9 @@ public class BufferPool {
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
 
+    private int numPgs;
+    private ConcurrentHashMap<PageId, Page> idToPage;
+
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
@@ -33,6 +36,8 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         // some code goes here
+        this.numPgs = numPages;
+        this.idToPage = new ConcurrentHashMap<PageId, Page>();
     }
     
     public static int getPageSize() {
@@ -64,10 +69,22 @@ public class BufferPool {
      * @param pid the ID of the requested page
      * @param perm the requested permissions on the page
      */
-    public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
+    public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        if (this.idToPage.size() == this.numPgs) {
+          String errMsg = "This buffer pool has reached its page capacity";
+          throw new DbException(errMsg);
+        }
+        Catalog catalog = Database.getCatalog();
+        Page page = this.idToPage.get(pid);
+        if (page == null) {
+          int tableId = pid.getTableId();
+          DbFile file = catalog.getDatabaseFile(tableId);
+          page = file.readPage(pid);
+          this.idToPage.put(pid, page);
+        }
+        return page;
     }
 
     /**
