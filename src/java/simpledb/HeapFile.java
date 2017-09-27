@@ -29,6 +29,7 @@ public class HeapFile implements DbFile {
         
         public HeapFileIterator(HeapFile hf, TransactionId tid) {
             this.tuples = hf.getValidTuples(tid);
+            this.isOpen = false;
         }
         
         /**
@@ -77,6 +78,15 @@ public class HeapFile implements DbFile {
         public void close() {
             this.isOpen = false;
         }
+        
+        /**
+         * Check if iterator is Open
+         * @return open status of iterator
+         */
+        public boolean isOpen() {
+            return this.isOpen;
+        }
+
     }
 
     /**
