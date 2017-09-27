@@ -15,6 +15,7 @@ public class SeqScan implements OpIterator {
     private int tblId;
     private String tblAlias;
     private HeapFile file;
+    private int position;
 
     /**
      * Creates a sequential scan over the specified table as a part of the
@@ -78,6 +79,7 @@ public class SeqScan implements OpIterator {
         // some code goes here
         this.tblId = tableid;
         this.tblAlias = tableAlias;
+        this.file = (HeapFile) Database.getCatalog().getDatabaseFile(tableid);
     }
 
     public SeqScan(TransactionId tid, int tableId) {
