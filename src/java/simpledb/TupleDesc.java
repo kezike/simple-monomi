@@ -40,6 +40,9 @@ public class TupleDesc implements Serializable, Iterable<TDItem> {
         this.items = new ArrayList<TDItem>();
         int numFlds = fieldAr.length;
         for (int i = 0; i < numFlds; i++) {
+          if (fieldAr[i] == null) {
+            fieldAr[i] = "null";
+          }
           TDItem newItem = new TDItem(typeAr[i], fieldAr[i]);
           this.items.add(newItem);
         }
@@ -58,7 +61,7 @@ public class TupleDesc implements Serializable, Iterable<TDItem> {
         this.items = new ArrayList<TDItem>();
         int numFlds = typeAr.length;
         for (int i = 0; i < numFlds; i++) {
-          TDItem newItem = new TDItem(typeAr[i], null);
+          TDItem newItem = new TDItem(typeAr[i], "null");
           this.items.add(newItem);
         }
     }

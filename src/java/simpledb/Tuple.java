@@ -68,15 +68,19 @@ public class Tuple implements Serializable {
      */
     public void setField(int i, Field f) {
         // some code goes here
-        int numFlds = this.fields.size();
-        if (i < numFlds) {
+        int numFlds = this.tupDesc.numFields();
+        if (i < 0 || i >= numFlds) {
+          return;
+        }
+        int numFldsCum = this.fields.size();
+        if (i < numFldsCum) {
           this.fields.set(i, f);
           return;
         }
         int fldIter = i;
-        while (fldIter - (numFlds - 1) > 0) {
+        while (fldIter - (numFldsCum - 1) > 0) {
           this.fields.add(null);
-          numFlds++;
+          numFldsCum++;
         }
         this.fields.set(i, f);
     }
@@ -89,8 +93,12 @@ public class Tuple implements Serializable {
      */
     public Field getField(int i) {
         // some code goes here
-        int numFlds = this.fields.size();
-        if (i > numFlds) {
+        int numFlds = this.tupDesc.numFields();
+        if (i < 0 || i >= numFlds) {
+          return null;
+        }
+        int numFldsCum = this.fields.size();
+        if (i >= numFldsCum) {
           return null;
         } else if (this.fields.get(i) == null) {
           return null;
@@ -137,5 +145,6 @@ public class Tuple implements Serializable {
     {
         // some code goes here
         this.tupDesc = td;
+        this.fields = new ArrayList<Field>();
     }
 }

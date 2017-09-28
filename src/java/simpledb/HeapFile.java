@@ -86,7 +86,6 @@ public class HeapFile implements DbFile {
         public boolean isOpen() {
             return this.isOpen;
         }
-
     }
 
     /**

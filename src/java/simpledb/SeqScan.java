@@ -14,7 +14,7 @@ public class SeqScan implements OpIterator {
     private TransactionId txnId;
     private int tblId;
     private String tblAlias;
-    private HeapFile file;
+    private DbFile file;
     private boolean isOpen;
 
     /**
@@ -42,7 +42,7 @@ public class SeqScan implements OpIterator {
         } else {
           this.tblAlias = tableAlias;
         }
-        this.file = (HeapFile) Database.getCatalog().getDatabaseFile(tableid);
+        this.file = Database.getCatalog().getDatabaseFile(tableid);
         this.isOpen = false;
     }
 
@@ -80,7 +80,7 @@ public class SeqScan implements OpIterator {
         // some code goes here
         this.tblId = tableid;
         this.tblAlias = tableAlias;
-        this.file = (HeapFile) Database.getCatalog().getDatabaseFile(tableid);
+        this.file = Database.getCatalog().getDatabaseFile(tableid);
     }
 
     public SeqScan(TransactionId tid, int tableId) {
@@ -89,19 +89,19 @@ public class SeqScan implements OpIterator {
 
     /**
      * Checks if iterator is open
-     * @return openStatus
+     * @return open status
      */
     private boolean checkOpen() {
         if (this.isOpen) {
           return true;
         }
-        throw IllegalStateException("Iterator is not open");
+        throw new IllegalStateException("Iterator is not open");
     }
 
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
         this.file.iterator(this.txnId).open();
-        this.isOpen == true;
+        this.isOpen = true;
     }
 
     /**
@@ -145,6 +145,7 @@ public class SeqScan implements OpIterator {
         // some code goes here
         this.checkOpen();
         this.file.iterator(this.txnId).close();
+        this.isOpen = false;
     }
 
     public void rewind() throws DbException, NoSuchElementException,
