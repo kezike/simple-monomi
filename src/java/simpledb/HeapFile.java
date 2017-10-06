@@ -23,13 +23,18 @@ public class HeapFile implements DbFile {
      */
     private class HeapFileIterator implements DbFileIterator {
         
-        private int position;
+    	private HeapFile heapFile;
+        private Iterator<Tuple> heapPageIter;
+        private TransactionId txnId;
         private boolean isOpen;
-        private List<?> tuples;
+        private int pgIdx;
         
         public HeapFileIterator(HeapFile hf, TransactionId tid) {
-            this.tuples = hf.getValidTuples(tid);
-            this.isOpen = false;
+            this.heapFile = hf;
+            this.heapPageIter = null;
+            this.txnId = tid;
+        	this.isOpen = false;
+        	this.pgIdx = -1;
         }
         
         /**
@@ -42,9 +47,55 @@ public class HeapFile implements DbFile {
         }
 
         /** @return true if there are more tuples available, false if no more tuples or iterator isn't open. */
-        public boolean hasNext()
+        /*public boolean hasNext()
             throws DbException, TransactionAbortedException {
             return (this.position < this.tuples.size() && this.isOpen);
+        }*/
+
+        /**
+         * Gets the next tuple from the operator (typically implementing by reading
+         * from a child operator or an access method).
+         *
+         * @return The next tuple in the iterator.
+         * @throws NoSuchElementException if there are no more tuples
+         */
+        /*public Tuple next()
+            throws DbException, TransactionAbortedException, NoSuchElementException {
+            if (!this.hasNext()) {
+              throw new NoSuchElementException("No more tuples in this file");
+            }
+            Object tupObj = this.tuples.get(this.position);
+            this.position++;
+            return (Tuple) tupObj;
+        }*/
+        
+        /** @return true if there are more tuples available, false if no more tuples or iterator isn't open. */
+        public boolean hasNext()
+            throws DbException, TransactionAbortedException {
+            if (!this.isOpen) {
+              return false;
+            }
+            if (heapPageIter != null) {
+              if (heapPageIter.hasNext()) {
+                return true;
+              }
+            } 
+            do {
+              this.pgIdx++;
+              BufferPool bufferPool = Database.getBufferPool();
+              PageId pid = new HeapPageId(this.heapFile.getId(), this.pgIdx);
+              HeapPage page = (HeapPage) bufferPool.getPage(this.txnId, pid, Permissions.READ_WRITE);
+              this.heapPageIter = page.iterator();
+              if (this.heapPageIter.hasNext()) {
+                System.out.println("HAS NEXT");
+              } else {
+                System.out.println("HASN'T NEXT");
+              }
+              if (this.pgIdx == this.heapFile.numPages()) {
+                return false;
+              }
+            } while (!this.heapPageIter.hasNext());
+            return true;
         }
 
         /**
@@ -59,9 +110,7 @@ public class HeapFile implements DbFile {
             if (!this.hasNext()) {
               throw new NoSuchElementException("No more tuples in this file");
             }
-            Object tupObj = this.tuples.get(this.position);
-            this.position++;
-            return (Tuple) tupObj;
+            return this.heapPageIter.next();
         }
 
         /**
@@ -69,7 +118,8 @@ public class HeapFile implements DbFile {
          * @throws DbException When rewind is unsupported.
          */
         public void rewind() throws DbException, TransactionAbortedException {
-            this.position = 0;
+        	this.pgIdx = -1;
+        	this.heapPageIter = null;
         }
 
         /**
