@@ -9,6 +9,10 @@ public class Predicate implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private int fieldNum;
+    private Op oprtr;
+    private Field oprnd;
+
     /** Constants used for return codes in Field.compare */
     public enum Op implements Serializable {
         EQUALS, GREATER_THAN, LESS_THAN, LESS_THAN_OR_EQ, GREATER_THAN_OR_EQ, LIKE, NOT_EQUALS;
@@ -56,6 +60,9 @@ public class Predicate implements Serializable {
      */
     public Predicate(int field, Op op, Field operand) {
         // some code goes here
+        this.fieldNum = field;
+        this.oprtr = op;
+        this.oprnd = operand;
     }
 
     /**
@@ -64,7 +71,7 @@ public class Predicate implements Serializable {
     public int getField()
     {
         // some code goes here
-        return -1;
+        return this.fieldNum;
     }
 
     /**
@@ -73,7 +80,7 @@ public class Predicate implements Serializable {
     public Op getOp()
     {
         // some code goes here
-        return null;
+        return this.oprtr;
     }
     
     /**
@@ -82,7 +89,7 @@ public class Predicate implements Serializable {
     public Field getOperand()
     {
         // some code goes here
-        return null;
+        return this.oprnd;
     }
     
     /**
@@ -97,7 +104,7 @@ public class Predicate implements Serializable {
      */
     public boolean filter(Tuple t) {
         // some code goes here
-        return false;
+        return t.getField(this.fieldNum).compare(this.oprtr, this.oprnd);
     }
 
     /**
@@ -106,6 +113,16 @@ public class Predicate implements Serializable {
      */
     public String toString() {
         // some code goes here
-        return "";
+        StringBuilder predStrBldr = new StringBuilder();
+        predStrBldr.append("field = ");
+        predStrBldr.append(String.valueOf(this.fieldNum));
+        predStrBldr.append("\n");
+        predStrBldr.append("operator = ");
+        predStrBldr.append(this.oprtr.toString());
+        predStrBldr.append("\n");
+        predStrBldr.append("operand = ");
+        predStrBldr.append(this.oprnd.toString());
+        predStrBldr.append("\n");
+        return predStrBldr.toString();
     }
 }

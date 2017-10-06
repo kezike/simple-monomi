@@ -91,17 +91,16 @@ public class SeqScan implements OpIterator {
      * Checks if iterator is open
      * @return open status
      */
-    private boolean checkOpen() {
-        if (this.isOpen) {
-          return true;
+    private void checkOpen() {
+        if (!this.isOpen) {
+          throw new IllegalStateException("Iterator is not open");
         }
-        throw new IllegalStateException("Iterator is not open");
     }
 
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
-        this.file.iterator(this.txnId).open();
         this.isOpen = true;
+        this.file.iterator(this.txnId).open();
     }
 
     /**
