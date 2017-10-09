@@ -86,10 +86,16 @@ public class Filter extends Operator {
             TransactionAbortedException, DbException {
         // some code goes here
         Tuple next = this.child.next();
-        if (this.pred.filter(next)) {
-          return next;
+        if (next == null) {
+        	return null;
         }
-        return null;
+        while (!this.pred.filter(next)) {
+        	next = this.child.next();
+        	if (next == null) {
+        		return null;
+        	}
+        }
+        return next;
     }
 
     @Override

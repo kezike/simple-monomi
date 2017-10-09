@@ -15,6 +15,7 @@ public class SeqScan implements OpIterator {
     private int tblId;
     private String tblAlias;
     private DbFile file;
+    private DbFileIterator fileIter;
     private boolean isOpen;
 
     /**
@@ -43,6 +44,7 @@ public class SeqScan implements OpIterator {
           this.tblAlias = tableAlias;
         }
         this.file = Database.getCatalog().getDatabaseFile(tableid);
+        this.fileIter = this.file.iterator(tid);
         this.isOpen = false;
     }
 
@@ -81,6 +83,7 @@ public class SeqScan implements OpIterator {
         this.tblId = tableid;
         this.tblAlias = tableAlias;
         this.file = Database.getCatalog().getDatabaseFile(tableid);
+        this.fileIter = this.file.iterator(this.txnId);
     }
 
     public SeqScan(TransactionId tid, int tableId) {
@@ -100,7 +103,7 @@ public class SeqScan implements OpIterator {
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
         this.isOpen = true;
-        this.file.iterator(this.txnId).open();
+        this.fileIter.open();
     }
 
     /**
@@ -130,20 +133,20 @@ public class SeqScan implements OpIterator {
     public boolean hasNext() throws TransactionAbortedException, DbException {
         // some code goes here
         this.checkOpen();
-        return this.file.iterator(this.txnId).hasNext();
+        return this.fileIter.hasNext();
     }
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
         // some code goes here
         this.checkOpen();
-        return this.file.iterator(this.txnId).next();
+        return this.fileIter.next();
     }
 
     public void close() {
         // some code goes here
         this.checkOpen();
-        this.file.iterator(this.txnId).close();
+        this.fileIter.close();
         this.isOpen = false;
     }
 
@@ -151,6 +154,6 @@ public class SeqScan implements OpIterator {
             TransactionAbortedException {
         // some code goes here
         this.checkOpen();
-        this.file.iterator(this.txnId).rewind();
+        this.fileIter.rewind();
     }
 }

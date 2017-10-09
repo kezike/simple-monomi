@@ -23,13 +23,18 @@ public class HeapFile implements DbFile {
      */
     private class HeapFileIterator implements DbFileIterator {
         
-        private int position;
+    	private HeapFile heapFile;
+        private Iterator<Tuple> heapPageIter;
+        private TransactionId txnId;
         private boolean isOpen;
-        private List<?> tuples;
+        private int pgIdx;
         
         public HeapFileIterator(HeapFile hf, TransactionId tid) {
-            this.tuples = hf.getValidTuples(tid);
-            this.isOpen = false;
+            this.heapFile = hf;
+            this.heapPageIter = null;
+            this.txnId = tid;
+        	this.isOpen = false;
+        	this.pgIdx = -1;
         }
         
         /**
@@ -40,11 +45,29 @@ public class HeapFile implements DbFile {
             throws DbException, TransactionAbortedException {
             this.isOpen = true;
         }
-
+        
         /** @return true if there are more tuples available, false if no more tuples or iterator isn't open. */
         public boolean hasNext()
             throws DbException, TransactionAbortedException {
-            return (this.position < this.tuples.size() && this.isOpen);
+            if (!this.isOpen) {
+              return false;
+            }
+            if (heapPageIter != null) {
+              if (heapPageIter.hasNext()) {
+                return true;
+              }
+            } 
+            do {
+              this.pgIdx++;
+              if (this.pgIdx == this.heapFile.numPages()) {
+                  return false;
+              }
+              BufferPool bufferPool = Database.getBufferPool();
+              PageId pid = new HeapPageId(this.heapFile.getId(), this.pgIdx);
+              HeapPage page = (HeapPage) bufferPool.getPage(this.txnId, pid, Permissions.READ_WRITE);
+              this.heapPageIter = page.iterator();
+            } while (!this.heapPageIter.hasNext());
+            return true;
         }
 
         /**
@@ -59,9 +82,7 @@ public class HeapFile implements DbFile {
             if (!this.hasNext()) {
               throw new NoSuchElementException("No more tuples in this file");
             }
-            Object tupObj = this.tuples.get(this.position);
-            this.position++;
-            return (Tuple) tupObj;
+            return this.heapPageIter.next();
         }
 
         /**
@@ -69,7 +90,8 @@ public class HeapFile implements DbFile {
          * @throws DbException When rewind is unsupported.
          */
         public void rewind() throws DbException, TransactionAbortedException {
-            this.position = 0;
+        	this.pgIdx = -1;
+        	this.heapPageIter = null;
         }
 
         /**
@@ -77,14 +99,6 @@ public class HeapFile implements DbFile {
          */
         public void close() {
             this.isOpen = false;
-        }
-        
-        /**
-         * Check if iterator is Open
-         * @return open status of iterator
-         */
-        public boolean isOpen() {
-            return this.isOpen;
         }
     }
 
@@ -149,6 +163,10 @@ public class HeapFile implements DbFile {
         int offset = pgNum * pgSize;
         byte pgData[] = new byte[pgSize];
         if (pgNum < 0 || pgNum > this.numPages()) {
+          try {
+        	  pageRaf.close();
+          } catch (IOException ioExn) {
+          }
           throw new IllegalArgumentException("This page does not exist");
         }
         try {
