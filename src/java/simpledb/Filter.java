@@ -36,6 +36,11 @@ public class Filter extends Operator {
         return this.pred;
     }
 
+    public TupleDesc getTupleDesc() {
+        // some code goes here
+        return this.child.getTupleDesc();
+    }
+
     /**
      * Checks if iterator is open
      * @return open status
@@ -45,19 +50,13 @@ public class Filter extends Operator {
           throw new IllegalStateException("Iterator is not open");
         }
     }
-
-    public TupleDesc getTupleDesc() {
-        // some code goes here
-        this.checkOpen();
-        return this.child.getTupleDesc();
-    }
-
+    
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
         // some code goes here
         super.open();
-        this.isOpen = true;
         this.child.open();
+        this.isOpen = true;
     }
 
     public void close() {
@@ -85,16 +84,14 @@ public class Filter extends Operator {
     protected Tuple fetchNext() throws NoSuchElementException,
             TransactionAbortedException, DbException {
         // some code goes here
-        Tuple next = this.child.next();
-        if (next == null) {
-        	return null;
-        }
-        while (!this.pred.filter(next)) {
-        	next = this.child.next();
-        	if (next == null) {
-        		return null;
-        	}
-        }
+    	Tuple next;
+    	do {
+            try {
+            	next = this.child.next();
+            } catch (NoSuchElementException nseExn) {
+            	return null;
+            }
+    	} while (!this.pred.filter(next));
         return next;
     }
 

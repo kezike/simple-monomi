@@ -8,6 +8,17 @@ import java.util.*;
 public class Join extends Operator {
 
     private static final long serialVersionUID = 1L;
+    
+    private JoinPredicate pred;
+    private OpIterator child1;
+    private OpIterator child2;
+    private Tuple next1;
+    private Tuple next2;
+    private TupleDesc tupDesc1;
+    private TupleDesc tupDesc2;
+    private TupleDesc tupDesc;
+    private OpIterator[] children;
+    private boolean isOpen;
 
     /**
      * Constructor. Accepts two children to join and the predicate to join them
@@ -22,11 +33,27 @@ public class Join extends Operator {
      */
     public Join(JoinPredicate p, OpIterator child1, OpIterator child2) {
         // some code goes here
+    	this.pred = p;
+    	this.child1 = child1;
+    	this.child2 = child2;
+        this.next1 = null;
+        this.next2 = null;
+    	try {
+    	  this.child1.open();
+          this.child2.open();
+    	} catch (DbException dbExn) {
+    	} catch (TransactionAbortedException txnAbExn) {
+    	}
+    	this.tupDesc1 = this.child1.getTupleDesc();
+    	this.tupDesc2 = this.child2.getTupleDesc();
+    	this.child1.close();
+    	this.child2.close();
+    	this.tupDesc = null;
     }
 
     public JoinPredicate getJoinPredicate() {
         // some code goes here
-        return null;
+        return this.pred;
     }
 
     /**
@@ -36,7 +63,8 @@ public class Join extends Operator {
      * */
     public String getJoinField1Name() {
         // some code goes here
-        return null;
+    	int field1 = this.pred.getField1();
+    	return this.tupDesc1.getFieldName(field1);
     }
 
     /**
@@ -46,7 +74,8 @@ public class Join extends Operator {
      * */
     public String getJoinField2Name() {
         // some code goes here
-        return null;
+    	int field2 = this.pred.getField2();
+    	return this.tupDesc2.getFieldName(field2);
     }
 
     /**
@@ -55,20 +84,44 @@ public class Join extends Operator {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+    	if (this.tupDesc == null) {
+    		this.tupDesc = TupleDesc.merge(this.tupDesc1, this.tupDesc2);
+    	}
+        return this.tupDesc;
+    }
+    
+    /**
+     * Checks if iterator is open
+     * @return open status
+     */
+    private void checkOpen() {
+        if (!this.isOpen) {
+          throw new IllegalStateException("Iterator is not open");
+        }
     }
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
         // some code goes here
+    	super.open();
+        this.child1.open();
+        this.child2.open();
+        this.isOpen = true;
     }
 
     public void close() {
         // some code goes here
+    	super.close();
+        this.child1.close();
+        this.child2.close();
+        this.isOpen = false;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
         // some code goes here
+    	this.checkOpen();
+        this.child1.rewind();
+        this.child2.rewind();
     }
 
     /**
@@ -91,18 +144,53 @@ public class Join extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        if (this.next1 == null) {
+          try {
+            this.next1 = this.child1.next();
+          } catch (NoSuchElementException nseExn) {
+            return null;
+          }
+        }
+        while (true) {
+          while (this.child2.hasNext()) {
+            this.next2 = this.child2.next();
+            if (this.pred.filter(this.next1, this.next2)) {
+              this.tupDesc = this.getTupleDesc();
+              Tuple next = new Tuple(this.tupDesc);
+              int numFlds1 = this.tupDesc1.numFields();
+              int i;
+              for (i = 0; i < numFlds1; i++) {
+                Field fld1 = this.next1.getField(i);
+                next.setField(i, fld1);
+              }
+              int numFlds2 = this.tupDesc2.numFields();
+              int j;
+              for (j = 0; j < numFlds2; j++) {
+                Field fld2 = this.next2.getField(j);
+                next.setField(i + j, fld2);
+              }
+              return next;
+            }
+          }
+          try {
+            this.next1 = this.child1.next();
+          } catch (NoSuchElementException nseExn) {
+            return null;
+          }
+          this.child2.rewind();
+        }
     }
 
     @Override
     public OpIterator[] getChildren() {
         // some code goes here
-        return null;
+    	return this.children;
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
         // some code goes here
+    	this.children = children;
     }
 
 }

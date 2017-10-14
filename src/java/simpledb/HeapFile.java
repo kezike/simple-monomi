@@ -33,8 +33,8 @@ public class HeapFile implements DbFile {
             this.heapFile = hf;
             this.heapPageIter = null;
             this.txnId = tid;
-        	this.isOpen = false;
-        	this.pgIdx = -1;
+            this.isOpen = false;
+            this.pgIdx = -1;
         }
         
         /**
@@ -164,14 +164,19 @@ public class HeapFile implements DbFile {
         byte pgData[] = new byte[pgSize];
         if (pgNum < 0 || pgNum > this.numPages()) {
           try {
-        	  pageRaf.close();
+        	pageRaf.close();
           } catch (IOException ioExn) {
           }
           throw new IllegalArgumentException("This page does not exist");
         }
         try {
-          pageRaf.seek(offset);
-          pageRaf.read(pgData, 0, pgSize);
+        	int i;
+          for (i = 0; i < pgSize-3; i += 4) {
+        	  pageRaf.seek(offset + i);
+              pageRaf.read(pgData, i, 4);
+          }
+          pageRaf.seek(offset + i);
+          pageRaf.read(pgData, i, pgSize - i);
           pageRaf.close();
           return new HeapPage((HeapPageId)pid, pgData);
         } catch (IOException ioExn) {

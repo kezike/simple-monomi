@@ -145,7 +145,6 @@ public class SeqScan implements OpIterator {
 
     public void close() {
         // some code goes here
-        this.checkOpen();
         this.fileIter.close();
         this.isOpen = false;
     }

@@ -44,12 +44,14 @@ public class StringAggregatorTest extends SimpleDbTestBase {
   @Test public void mergeCount() throws Exception {
     scan1.open();
     StringAggregator agg = new StringAggregator(0, Type.INT_TYPE, 1, Aggregator.Op.COUNT);
-
+    
+    int iter = 0;
     for (int[] step : count) {
       agg.mergeTupleIntoGroup(scan1.next());
       OpIterator it = agg.iterator();
       it.open();
       TestUtil.matchAllTuples(TestUtil.createTupleList(width1, step), it);
+      iter++;
     }
   }
 

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 public class Tuple implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
     private TupleDesc tupDesc;
     private RecordId recId;
     private ArrayList<Field> fields;
@@ -68,6 +69,9 @@ public class Tuple implements Serializable {
      */
     public void setField(int i, Field f) {
         // some code goes here
+    	if (this.tupDesc == null) {
+    		System.out.println("EMPTY TUPDESC");
+    	}
         int numFlds = this.tupDesc.numFields();
         if (i < 0 || i >= numFlds) {
           return;
