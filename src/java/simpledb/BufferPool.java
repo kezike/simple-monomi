@@ -2,6 +2,8 @@ package simpledb;
 
 import java.io.*;
 
+import java.util.*;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -80,8 +82,8 @@ public class BufferPool {
         Page page = this.idToPage.get(pid);
         if (page == null) {
           int tableId = pid.getTableId();
-          DbFile file = catalog.getDatabaseFile(tableId);
-          page = file.readPage(pid);
+          DbFile table = catalog.getDatabaseFile(tableId);
+          page = table.readPage(pid);
           this.idToPage.put(pid, page);
         }
         return page;
@@ -150,6 +152,14 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+        Catalog catalog = Database.getCatalog();
+        DbFile table = catalog.getDatabaseFile(tableId);
+        ArrayList<Page> pagesAffected = table.insertTuple(tid, t);
+        PageId pid = t.getRecordId().getPageId();
+        for (Page pageAffected : pagesAffected) {
+          pageAffected.markDirty(true, tid);
+          this.idToPage.put(pageAffected.getId(), pageAffected);
+        }
     }
 
     /**
@@ -169,6 +179,15 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+        PageId pid = t.getRecordId().getPageId();
+        int tableId = pid.getTableId();
+        Catalog catalog = Database.getCatalog();
+        DbFile table = catalog.getDatabaseFile(tableId);
+        ArrayList<Page> pagesAffected = table.deleteTuple(tid, t);
+        for (Page pageAffected : pagesAffected) {
+          pageAffected.markDirty(true, tid);
+          this.idToPage.put(pageAffected.getId(), pageAffected);
+        }
     }
 
     /**

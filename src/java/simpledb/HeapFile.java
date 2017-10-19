@@ -158,27 +158,22 @@ public class HeapFile implements DbFile {
         } catch (FileNotFoundException fnfExn) {
           throw new IllegalArgumentException("File not found");
         }
-        int pgNum = pid.getPageNumber();
-        int pgSize = BufferPool.getPageSize();
-        int offset = pgNum * pgSize;
-        byte pgData[] = new byte[pgSize];
-        if (pgNum < 0 || pgNum > this.numPages()) {
+        int pageNum = pid.getPageNumber();
+        int pageSize = BufferPool.getPageSize();
+        int offset = pageNum * pageSize;
+        byte pageData[] = new byte[pageSize];
+        if (pageNum < 0 || pageNum > this.numPages()) {
           try {
-        	pageRaf.close();
+            pageRaf.close();
           } catch (IOException ioExn) {
           }
           throw new IllegalArgumentException("This page does not exist");
         }
         try {
-       	  int i;
-          for (i = 0; i < pgSize-3; i += 4) {
-            pageRaf.seek(offset + i);
-            pageRaf.read(pgData, i, 4);
-          }
-          pageRaf.seek(offset + i);
-          pageRaf.read(pgData, i, pgSize - i);
+          pageRaf.seek(offset);
+          pageRaf.read(pageData, 0, pageSize);
           pageRaf.close();
-          return new HeapPage((HeapPageId)pid, pgData);
+          return new HeapPage((HeapPageId)pid, pageData);
         } catch (IOException ioExn) {
           throw new IllegalArgumentException("Page does not exist in this file");
         }
@@ -195,8 +190,8 @@ public class HeapFile implements DbFile {
      */
     public int numPages() {
         // some code goes here
-        int pgSize = BufferPool.getPageSize();
-        return (int) Math.ceil(this.file.length() / (double) pgSize);
+        int pageSize = BufferPool.getPageSize();
+        return (int) Math.ceil(this.file.length() / (double) pageSize);
     }
 
     // see DbFile.java for javadocs
@@ -215,25 +210,27 @@ public class HeapFile implements DbFile {
             pid = new HeapPageId(this.getId(), i);
             page = (HeapPage) bufferPool.getPage(tid, pid, Permissions.READ_WRITE);
             page.insertTuple(t);
-            page.markDirty(true, tid);
             pagesAffected.add(page);
             foundPage = true;
+            break;
           } catch (DbException dbExn) {
           }
         }
         if (!foundPage) {
-          int pgSize = BufferPool.getPageSize();
-          byte[] pageData = new byte[pgSize];
+          int pageSize = BufferPool.getPageSize();
+          int offset = numPages * pageSize;
+          byte[] pageData = new byte[pageSize];
           Arrays.fill(pageData, (byte) 0);
           RandomAccessFile pageRaf = new RandomAccessFile(this.file, "rw");
-          pageRaf.seek(numPages*pgSize);
+          pageRaf.seek(offset);
           pageRaf.write(pageData);
+          pageRaf.close();
           pid = new HeapPageId(this.getId(), numPages);
+          page = (HeapPage) this.readPage(pid);
+          page.insertTuple(t);
           page = (HeapPage) bufferPool.getPage(tid, pid, Permissions.READ_WRITE);
           page.insertTuple(t);
-          page.markDirty(true, tid);
           pagesAffected.add(page);
-          numPages++;
         }
         return pagesAffected;
     }
@@ -248,7 +245,6 @@ public class HeapFile implements DbFile {
         PageId pid = t.getRecordId().getPageId();
         HeapPage page = (HeapPage) bufferPool.getPage(tid, pid, Permissions.READ_WRITE);
         page.deleteTuple(t);
-        page.markDirty(true, tid);
         pagesAffected.add(page);
         return pagesAffected;
     }

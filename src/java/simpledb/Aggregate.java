@@ -47,7 +47,12 @@ public class Aggregate extends Operator {
         this.aOprtr = aop;
         this.isOpen = false;
         this.tupDesc = this.child.getTupleDesc();
-        Type gbFieldType = this.tupDesc.getFieldType(gbfield);
+        Type gbFieldType;
+        if (this.hasGrouping()) {
+          gbFieldType = this.tupDesc.getFieldType(gbfield);
+        } else {
+          gbFieldType = null;
+        }
         Type aFieldType = this.tupDesc.getFieldType(afield);
         if (aFieldType == Type.INT_TYPE) {
           this.aggr = new IntegerAggregator(gbfield, gbFieldType, afield, aop);

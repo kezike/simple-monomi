@@ -323,9 +323,9 @@ public class HeapPage implements Page {
      */
     public int getNumEmptySlots() {
         // some code goes here
-        int numTuples = this.getNumTuples();
+        // int numTuples = this.getNumTuples();
         int numEmptySlots = 0;
-        for (int i = 0; i < numTuples; i++) {
+        for (int i = 0; i < this.numSlots; i++) {
           if (!this.isSlotUsed(i)) {
             numEmptySlots++;
           }

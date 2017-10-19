@@ -118,7 +118,7 @@ public class SeqScan implements OpIterator {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        this.checkOpen();
+        // this.checkOpen();
         TupleDesc tupDesc = Database.getCatalog().getTupleDesc(this.tblId);
         ArrayList<TDItem> items = new ArrayList<TDItem>();
         for (TDItem tdItem : tupDesc.getItems()) {

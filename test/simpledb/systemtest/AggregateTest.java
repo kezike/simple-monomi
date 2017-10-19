@@ -14,8 +14,18 @@ public class AggregateTest extends SimpleDbTestBase {
             throws DbException, TransactionAbortedException, IOException {
         TransactionId tid = new TransactionId();
         SeqScan ss = new SeqScan(tid, table.getId(), "");
+        
         Aggregate ag = new Aggregate(ss, aggregateColumn, groupColumn, operation);
-
+        
+        ag.open();
+        int agIter = 0;
+        while (ag.hasNext()) {
+         System.out.println("AG TUPLE " + String.valueOf(agIter) + ": " + ag.next());
+         agIter++;
+        }
+        ag.rewind();
+        ag.close();
+        
         SystemTestUtil.matchTuples(ag, expectedResult);
         Database.getBufferPool().transactionComplete(tid);
     }
