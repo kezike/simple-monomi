@@ -40,7 +40,7 @@ public class Aggregate extends Operator {
      *            The aggregation operator to use
      */
     public Aggregate(OpIterator child, int afield, int gbfield, Aggregator.Op aop) {
-	    // some code goes here
+	// some code goes here
         this.child = child;
         this.aField = afield;
         this.gbField = gbfield;
@@ -104,11 +104,11 @@ public class Aggregate extends Operator {
      *         null;
      * */
     public String groupFieldName() {
-	    // some code goes here
+	// some code goes here
         if (this.hasGrouping()) {
-          return this.getTupleDesc().getFieldName(this.gbField);
+          return this.tupDesc.getFieldName(this.gbField);
         }
-	    return null;
+	return null;
     }
 
     /**
