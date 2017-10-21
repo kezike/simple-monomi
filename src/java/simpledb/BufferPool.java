@@ -1,9 +1,7 @@
 package simpledb;
 
 import java.io.*;
-
 import java.util.*;
-
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -74,13 +72,13 @@ public class BufferPool {
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
-        if (this.idToPage.size() == this.numPgs) {
-          String errMsg = "This buffer pool has reached its page capacity";
-          throw new DbException(errMsg);
-        }
+        
         Catalog catalog = Database.getCatalog();
         Page page = this.idToPage.get(pid);
         if (page == null) {
+          if (this.idToPage.size() == this.numPgs) {
+            this.evictPage();
+          }
           int tableId = pid.getTableId();
           DbFile table = catalog.getDatabaseFile(tableId);
           page = table.readPage(pid);
@@ -198,7 +196,10 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for lab1
-
+    	Set<PageId> pids = this.idToPage.keySet();
+    	for (PageId pid : pids) {
+          this.flushPage(pid);
+    	}
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -212,6 +213,7 @@ public class BufferPool {
     public synchronized void discardPage(PageId pid) {
         // some code goes here
         // not necessary for lab1
+        this.idToPage.remove(pid);
     }
 
     /**
@@ -221,6 +223,15 @@ public class BufferPool {
     private synchronized  void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for lab1
+    	int tableId = pid.getTableId();
+    	Catalog catalog = Database.getCatalog();
+    	DbFile table = catalog.getDatabaseFile(tableId);
+    	Page page = this.idToPage.get(pid);
+    	TransactionId tid = new TransactionId();
+    	if (page != null) {
+    	  table.writePage(page);
+          page.markDirty(false, tid);
+    	}
     }
 
     /** Write all pages of the specified transaction to disk.
@@ -237,6 +248,24 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
+        PageId lru = null;
+        Set<PageId> pids = this.idToPage.keySet();
+        for (PageId pid : pids) {
+          if (lru == null) {
+            lru = pid;
+            continue;
+          }
+          if (pid.getTableId() < lru.getTableId() && pid.getPageNumber() < lru.getPageNumber()) {
+            lru = pid;
+          }
+        }
+        if (lru != null) {
+          try {
+            this.flushPage(lru);
+            this.discardPage(lru);
+          } catch (IOException ioExn) {
+          }
+        }
     }
 
 }
