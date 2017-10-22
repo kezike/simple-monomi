@@ -198,11 +198,6 @@ public class IntegerAggregator implements Aggregator {
               tupAggr.setField(aIdx, new IntField(tupAggrAFieldVal + tupAFieldVal));
               break;
             case AVG:
-              System.out.println("AVG");
-              System.out.println("tupAggrCount: " + String.valueOf(tupAggrCount));
-              System.out.println("tupAggrAFieldVal: " + String.valueOf(tupAggrAFieldVal));
-              System.out.println("tupAFieldVal: " + String.valueOf(tupAFieldVal));
-              System.out.println("avg: " + String.valueOf((tupAggrSum + tupAFieldVal) / (tupAggrCount + 1)) + "\n");
               tupAggr.setField(aIdx, new IntField((tupAggrSum + tupAFieldVal) / (tupAggrCount + 1)));
               break;
             case COUNT:
