@@ -125,7 +125,7 @@ public class SystemTestUtil {
             boolean isExpected = copy.remove(list);
             Debug.log("scanned tuple: %s (%s)", t, isExpected ? "expected" : "not expected");
             if (!isExpected) {
-            	System.out.println("UNEXPECTED AG TUPLE: " + t);
+            	// System.out.println("UNEXPECTED AG TUPLE: " + t);
                 Assert.fail("expected tuples does not contain: " + t);
             }
         }

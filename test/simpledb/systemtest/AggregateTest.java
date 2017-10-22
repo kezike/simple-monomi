@@ -17,14 +17,14 @@ public class AggregateTest extends SimpleDbTestBase {
         
         Aggregate ag = new Aggregate(ss, aggregateColumn, groupColumn, operation);
         
-        ag.open();
+        /*ag.open();
         int agIter = 0;
         while (ag.hasNext()) {
          System.out.println("AG TUPLE " + String.valueOf(agIter) + ": " + ag.next());
          agIter++;
         }
         ag.rewind();
-        ag.close();
+        ag.close();*/
         
         SystemTestUtil.matchTuples(ag, expectedResult);
         Database.getBufferPool().transactionComplete(tid);

@@ -40,7 +40,7 @@ public class Aggregate extends Operator {
      *            The aggregation operator to use
      */
     public Aggregate(OpIterator child, int afield, int gbfield, Aggregator.Op aop) {
-	// some code goes here
+        // some code goes here
         this.child = child;
         this.aField = afield;
         this.gbField = gbfield;
@@ -62,14 +62,14 @@ public class Aggregate extends Operator {
         this.mergeAllTuples(child, this.aggr);
         this.aggrIter = this.aggr.iterator();
     }
-
+    
     /**
      * @return whether or not aggregator has grouping
      */
     public boolean hasGrouping() {
         return this.gbField != Aggregator.NO_GROUPING;
     }
-
+    
     /**
      * Merge all tuples of a child OpIterator into their appropriate group
      * @param child the OpIterator feeding tuples
@@ -92,7 +92,7 @@ public class Aggregate extends Operator {
      * @return If this aggregate is accompanied by a groupby, return the groupby
      *         field index in the <b>INPUT</b> tuples. If not, return
      *         {@link simpledb.Aggregator#NO_GROUPING}
-     * */
+     **/
     public int groupField() {
 	    // some code goes here
         return this.gbField;
@@ -102,44 +102,44 @@ public class Aggregate extends Operator {
      * @return If this aggregate is accompanied by a group by, return the name
      *         of the groupby field in the <b>OUTPUT</b> tuples. If not, return
      *         null;
-     * */
+     **/
     public String groupFieldName() {
-	// some code goes here
+	    // some code goes here
         if (this.hasGrouping()) {
           return this.tupDesc.getFieldName(this.gbField);
         }
-	return null;
+        return null;
     }
 
     /**
      * @return the aggregate field
-     * */
+     **/
     public int aggregateField() {
-	    // some code goes here
+        // some code goes here
         return this.aField;
     }
-
+    
     /**
      * @return return the name of the aggregate field in the <b>OUTPUT</b>
      *         tuples
-     * */
+     **/
     public String aggregateFieldName() {
-	    // some code goes here
+        // some code goes here
         return this.tupDesc.getFieldName(this.aField);
     }
-
+    
     /**
      * @return return the aggregate operator
-     * */
+     **/
     public Aggregator.Op aggregateOp() {
-	    // some code goes here
+        // some code goes here
         return this.aOprtr;
     }
-
+    
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
-	    return aop.toString();
+        return aop.toString();
     }
-
+    
     /**
      * Checks if iterator is open
      * @return open status
@@ -149,7 +149,7 @@ public class Aggregate extends Operator {
           throw new IllegalStateException("Iterator is not open");
         }
     }
-
+    
     public void open() throws NoSuchElementException, DbException,
         TransactionAbortedException {
         // some code goes here
@@ -158,7 +158,7 @@ public class Aggregate extends Operator {
         this.aggrIter.open();
         this.isOpen = true;
     }
-
+    
     /**
      * Returns the next tuple. If there is a group by field, then the first
      * field is the field by which we are grouping, and the second field is the
@@ -204,19 +204,19 @@ public class Aggregate extends Operator {
         // some code goes here
         super.close();
         this.child.close();
+        this.aggrIter.close();
         this.isOpen = false;
     }
-
+    
     @Override
     public OpIterator[] getChildren() {
 	    // some code goes here
         return this.children;
     }
-
+    
     @Override
     public void setChildren(OpIterator[] children) {
-	    // some code goes here
+        // some code goes here
         this.children = children;
     }
-    
 }

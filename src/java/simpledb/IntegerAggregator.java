@@ -13,6 +13,7 @@ public class IntegerAggregator implements Aggregator {
     private static Field NO_GROUPING_FIELD = new IntField(NO_GROUPING);
     private ConcurrentHashMap<Field, Tuple> aggrByGroup;
     private ConcurrentHashMap<Field, Integer> countByGroup;
+    private ConcurrentHashMap<Field, Integer> sumByGroup;
     private int gbField;
     private Type gbFieldType;
     private int aField;
@@ -50,7 +51,7 @@ public class IntegerAggregator implements Aggregator {
         }
 
         /**
-         * Gets the next tuple from the operator (typically implementing by reading
+         * Gets the next tuple from the operator (typically implemented by reading
          * from a child operator or an access method).
          *
          * @return The next tuple in the iterator.
@@ -109,6 +110,7 @@ public class IntegerAggregator implements Aggregator {
         // some code goes here
         this.aggrByGroup = new ConcurrentHashMap<Field, Tuple>();
         this.countByGroup = new ConcurrentHashMap<Field, Integer>();
+        this.sumByGroup = new ConcurrentHashMap<Field, Integer>();
         this.gbField = gbfield;
         this.gbFieldType = gbfieldtype;
         this.aField = afield;
@@ -143,6 +145,7 @@ public class IntegerAggregator implements Aggregator {
         Field tupAggrGBField;
         IntField tupAggrAField;
         Integer tupAggrCount;
+        Integer tupAggrSum;
         int gbIdx = 0;
         int aIdx;
         if (this.hasGrouping()) {
@@ -163,14 +166,20 @@ public class IntegerAggregator implements Aggregator {
         }
         tupAggr = this.aggrByGroup.get(tupAggrGBField);
         tupAggrCount = this.countByGroup.get(tupAggrGBField);
+        tupAggrSum = this.sumByGroup.get(tupAggrGBField);
         int tupAFieldVal = tupAField.getValue();
         if (tupAggr == null) {
           tupAggr = new Tuple(tupAggrDesc);
           if (this.hasGrouping()) {
             tupAggr.setField(gbIdx, tupAggrGBField);
           }
-          tupAggr.setField(aIdx, new IntField(tupAFieldVal));
+          if (this.oprtr == Op.COUNT) {
+            tupAggr.setField(aIdx, new IntField(1));
+          } else {
+            tupAggr.setField(aIdx, new IntField(tupAFieldVal));;
+          }
           tupAggrCount = 0;
+          tupAggrSum = 0;
         } else {
           tupAggrAField = (IntField) tupAggr.getField(aIdx);
           int tupAggrAFieldVal = tupAggrAField.getValue();
@@ -189,7 +198,12 @@ public class IntegerAggregator implements Aggregator {
               tupAggr.setField(aIdx, new IntField(tupAggrAFieldVal + tupAFieldVal));
               break;
             case AVG:
-              tupAggr.setField(aIdx, new IntField((tupAggrCount * tupAggrAFieldVal + tupAFieldVal) / (tupAggrCount + 1)));
+              System.out.println("AVG");
+              System.out.println("tupAggrCount: " + String.valueOf(tupAggrCount));
+              System.out.println("tupAggrAFieldVal: " + String.valueOf(tupAggrAFieldVal));
+              System.out.println("tupAFieldVal: " + String.valueOf(tupAFieldVal));
+              System.out.println("avg: " + String.valueOf((tupAggrSum + tupAFieldVal) / (tupAggrCount + 1)) + "\n");
+              tupAggr.setField(aIdx, new IntField((tupAggrSum + tupAFieldVal) / (tupAggrCount + 1)));
               break;
             case COUNT:
               tupAggr.setField(aIdx, new IntField(tupAggrAFieldVal + 1));
@@ -198,6 +212,7 @@ public class IntegerAggregator implements Aggregator {
         }
         this.aggrByGroup.put(tupAggrGBField, tupAggr);
         this.countByGroup.put(tupAggrGBField, tupAggrCount + 1);
+        this.sumByGroup.put(tupAggrGBField, tupAggrSum + tupAFieldVal);
     }
 
     /**
