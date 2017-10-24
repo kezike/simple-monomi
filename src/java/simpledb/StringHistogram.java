@@ -1,8 +1,7 @@
 package simpledb;
 
 /**
- * A class to represent a fixed-width histogram over a single String-based
- * field.
+ * A class to represent a fixed-width histogram over a single String-based field
  */
 public class StringHistogram {
     final IntHistogram hist;
@@ -50,16 +49,16 @@ public class StringHistogram {
     }
 
     /** @return the maximum value indexed by the histogram */
-    int maxVal() {
+    public int maxVal() {
         return stringToInt("zzzz");
     }
 
     /** @return the minimum value indexed by the histogram */
-    int minVal() {
+    public int minVal() {
         return stringToInt("");
     }
 
-    /** Add a new value to thte histogram */
+    /** Add a new value to the histogram */
     public void addValue(String s) {
         int val = stringToInt(s);
         hist.addValue(val);
@@ -88,5 +87,12 @@ public class StringHistogram {
      * */
     public double avgSelectivity() {
         return hist.avgSelectivity();
+    }
+
+    /**
+     * @return the number of tuples of the underlying table
+     **/
+    public int numTuples() {
+        return hist.numTuples();
     }
 }

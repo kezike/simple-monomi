@@ -72,7 +72,6 @@ public class BufferPool {
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
-        
         Catalog catalog = Database.getCatalog();
         Page page = this.idToPage.get(pid);
         if (page == null) {

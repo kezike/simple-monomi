@@ -3,11 +3,12 @@ package simpledb;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.NoSuchElementException;
 
 /**
- * TableStats represents statistics (e.g., histograms) about base tables in a
- * query. 
+ * TableStats represents statistics (e.g., histograms) about base tables in a query.
  * 
  * This class is not needed in implementing lab1 and lab2.
  */
@@ -66,6 +67,11 @@ public class TableStats {
      */
     static final int NUM_HIST_BINS = 100;
 
+    private int tblId;
+    private int ioPageCost;
+    private int numTuples;
+    private ArrayList<Object> histograms;
+
     /**
      * Create a new TableStats object, that keeps track of statistics on each
      * column of a table
@@ -85,6 +91,67 @@ public class TableStats {
         // necessarily have to (for example) do everything
         // in a single scan of the table.
         // some code goes here
+        this.tblId = tableid;
+        this.ioPageCost = ioCostPerPage;
+        this.histograms = new ArrayList<Object>();
+        Catalog catalog = Database.getCatalog();
+        DbFile table = catalog.getDatabaseFile(tableid);
+        TupleDesc tupDesc = table.getTupleDesc();
+        DbFileIterator tblIter = table.iterator(new TransactionId());
+        try {
+          tblIter.open();
+          for (int i = 0; i < tupDesc.numFields(); i++) {
+            Type fieldType = tupDesc.getFieldType(i);
+            if (fieldType == Type.INT_TYPE) {
+              int min = Integer.MAX_VALUE;
+              int max = Integer.MIN_VALUE;
+              while (tblIter.hasNext()) {
+                Tuple next = tblIter.next();
+                IntField nextField = (IntField) (next.getField(i));
+                int nextVal = nextField.getValue();
+                if (nextVal < min) {
+                  min = nextVal;
+                }
+                if (nextVal > max) {
+                  max = nextVal;
+                }
+              }
+              Object histogram = (Object) (new IntHistogram(NUM_HIST_BINS, min, max));
+              this.histograms.add(histogram);
+            } else {
+              Object histogram = (Object) (new StringHistogram(NUM_HIST_BINS));
+              this.histograms.add(histogram);
+            }
+            tblIter.rewind();
+          }
+          for (int i = 0; i < tupDesc.numFields(); i++) {
+            Type fieldType = tupDesc.getFieldType(i);
+            if (fieldType == Type.INT_TYPE) {
+              IntHistogram intHist = (IntHistogram) this.histograms.get(i);
+              while (tblIter.hasNext()) {
+                Tuple next = tblIter.next();
+                IntField nextField = (IntField) (next.getField(i));
+                int nextVal = nextField.getValue();
+                intHist.addValue(nextVal);
+              }
+              this.numTuples = intHist.numTuples();
+            } else {
+              StringHistogram strHist = (StringHistogram) this.histograms.get(i);
+              while (tblIter.hasNext()) {
+                Tuple next = tblIter.next();
+                StringField nextField = (StringField) (next.getField(i));
+                String nextVal = nextField.getValue();
+                strHist.addValue(nextVal);
+              }
+              this.numTuples = strHist.numTuples();
+            }
+            tblIter.rewind();
+          }
+          tblIter.close();
+        } catch (DbException dbExn) {
+        } catch (TransactionAbortedException txnAbExn) {
+        } catch (NoSuchElementException nseExn) {
+        }
     }
 
     /**
@@ -101,7 +168,10 @@ public class TableStats {
      */
     public double estimateScanCost() {
         // some code goes here
-        return 0;
+        Catalog catalog = Database.getCatalog();
+        DbFile table = catalog.getDatabaseFile(this.tblId);
+        int numPages = ((HeapFile) table).numPages();
+        return numPages * this.ioPageCost;
     }
 
     /**
@@ -115,7 +185,8 @@ public class TableStats {
      */
     public int estimateTableCardinality(double selectivityFactor) {
         // some code goes here
-        return 0;
+        // return (int) Math.round(Math.floor(selectivityFactor * this.numTuples));
+        return (int) (selectivityFactor * this.numTuples);
     }
 
     /**
@@ -130,6 +201,22 @@ public class TableStats {
      * */
     public double avgSelectivity(int field, Predicate.Op op) {
         // some code goes here
+        /*double avgSel = 0.0;
+        Type fieldType = tupDesc.getFieldType(field);
+        if (fieldType == Type.INT_TYPE) {
+          IntHistogram intHist = (IntHistogram) this.histograms.get(field);
+          double valProb = 1.0 / (intHist.maxVal() - intHist.minVal());
+          for (int i = intHist.minVal(); i <= intHist.maxVal(); i++) {
+            avgSel += valProb * intHist.estimateSelectivity(op, i);
+          }
+        } else {
+          StringHistogram strHist = (StringHistogram) this.histograms.get(field);
+          double valProb = 1.0 / (strHist.maxVal() - strHist.minVal());
+          for (int i = strHist.minVal(); i <= strHist.maxVal(); i++) {
+            avgSel += valProb * strHist.estimateSelectivity(op, );
+          }
+        }
+        return avgSel;*/
         return 1.0;
     }
 
@@ -148,7 +235,34 @@ public class TableStats {
      */
     public double estimateSelectivity(int field, Predicate.Op op, Field constant) {
         // some code goes here
-        return 1.0;
+        Type fieldType = constant.getType();
+        if (fieldType == Type.INT_TYPE) {
+          int fieldConstant = ((IntField) constant).getValue();
+          IntHistogram intHist = (IntHistogram) this.histograms.get(field);
+          return intHist.estimateSelectivity(op, fieldConstant);
+        } else {
+          String fieldConstant = ((StringField) constant).getValue();
+          StringHistogram strHist = (StringHistogram) this.histograms.get(field);
+          return strHist.estimateSelectivity(op, fieldConstant);
+        }
+    }
+
+    /**
+     * @param field field of interest 
+     * @return the minimum value of field
+     **/
+    public int minVal(int field) {
+        IntHistogram intHist = (IntHistogram) this.histograms.get(field);
+        return intHist.minVal();
+    }
+
+    /**
+     * @param field field of interest 
+     * @return the maximum value of field
+     **/
+    public int maxVal(int field) {
+        IntHistogram intHist = (IntHistogram) this.histograms.get(field);
+        return intHist.maxVal();
     }
 
     /**
@@ -156,7 +270,7 @@ public class TableStats {
      * */
     public int totalTuples() {
         // some code goes here
-        return 0;
+        return this.numTuples;
     }
 
 }

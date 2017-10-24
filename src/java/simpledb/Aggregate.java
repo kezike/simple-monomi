@@ -74,7 +74,7 @@ public class Aggregate extends Operator {
      * Merge all tuples of a child OpIterator into their appropriate group
      * @param child the OpIterator feeding tuples
      */
-    public void mergeAllTuples(OpIterator child, Aggregator aggr) {
+    private void mergeAllTuples(OpIterator child, Aggregator aggr) {
         try {
           child.open();
           while (child.hasNext()) {

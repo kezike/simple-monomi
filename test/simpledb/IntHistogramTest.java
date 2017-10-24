@@ -23,7 +23,7 @@ public class IntHistogramTest {
 		for (int c = 0; c < 33554432; c++) {
 			h.addValue((c * 23) % 101);	// Pseudo-random number; at least get a distribution
 		}
-		
+
 		// Try printing out all of the values; make sure "estimateSelectivity()"
 		// cause any problems
 		double selectivity = 0.0;
