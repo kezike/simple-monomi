@@ -72,6 +72,7 @@ public class IntHistogram {
     public void addValue(int v) {
     	// some code goes here
         int bucket = this.computeBucket(v);
+        bucket = Math.max(0, Math.min(this.numBuckets - 1, bucket)); 
         Integer bucketCount = this.countByBucket.get(bucket);
         Integer bucketMin = this.minByBucket.get(bucket);
         Integer bucketMax = this.maxByBucket.get(bucket);
@@ -85,6 +86,9 @@ public class IntHistogram {
         } else if (v > bucketMax) {
           this.maxByBucket.put(bucket, v);
         }
+        /*if (bucketCount == null) {
+          bucketCount = 0;
+        }*/
         this.countByBucket.put(bucket, bucketCount + 1);
         this.numTuples++;
     }

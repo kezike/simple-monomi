@@ -231,14 +231,39 @@ public class JoinOptimizer {
      *             join, or or when another internal error occurs
      */
     public Vector<LogicalJoinNode> orderJoins(
-            HashMap<String, TableStats> stats,
-            HashMap<String, Double> filterSelectivities, boolean explain)
-            throws ParsingException {
-        //Not necessary for labs 1--3
-
+        HashMap<String, TableStats> stats,
+        HashMap<String, Double> filterSelectivities, boolean explain)
+        throws ParsingException {
+        // Not necessary for labs 1--3
         // some code goes here
-        //Replace the following
-        return joins;
+        PlanCache optJoinPlan = new PlanCache();
+        optJoinPlan.addPlan(new HashSet<LogicalJoinNode>(), 0.0, 0, new Vector<LogicalJoinNode>());
+        for (int i = 1; i <= this.joins.size(); i++) {
+          Set<Set<LogicalJoinNode>> joinSets = this.enumerateSubsets(this.joins, i);
+          for (Set<LogicalJoinNode> joinSet : joinSets) {
+            CostCard bestPlan = new CostCard();
+            bestPlan.cost = Double.POSITIVE_INFINITY;
+            bestPlan.card = Integer.MAX_VALUE;
+            bestPlan.plan = new Vector<LogicalJoinNode>();
+            // Set<Set<LogicalJoinNode>> joinSubsetsInner = this.enumerateSubsets(new Vector(joinSubsetOuter), i - 1);
+            for (LogicalJoinNode joinNode : joinSet) {
+              // Vector<LogicalJoinNode> subPlan = optJoin.getOrder(joinNode);
+              CostCard plan = this.computeCostAndCardOfSubplan(stats, filterSelectivities, joinNode, joinSet, bestPlan.cost, optJoinPlan);
+              if (plan == null) {
+                continue;
+              }
+              if (plan.cost < bestPlan.cost) {
+                bestPlan = plan;
+              }
+            }
+            optJoinPlan.addPlan(joinSet, bestPlan.cost, bestPlan.card, bestPlan.plan);
+          }
+        }
+        Vector<LogicalJoinNode> optJoinOrder = optJoinPlan.getOrder(new HashSet<LogicalJoinNode>(this.joins));
+        if (explain) {
+          printJoins(optJoinOrder, optJoinPlan, stats, filterSelectivities);
+        }
+        return optJoinOrder;
     }
 
     // ===================== Private Methods =================================
@@ -275,10 +300,10 @@ public class JoinOptimizer {
      */
     @SuppressWarnings("unchecked")
     private CostCard computeCostAndCardOfSubplan(
-            HashMap<String, TableStats> stats,
-            HashMap<String, Double> filterSelectivities,
-            LogicalJoinNode joinToRemove, Set<LogicalJoinNode> joinSet,
-            double bestCostSoFar, PlanCache pc) throws ParsingException {
+        HashMap<String, TableStats> stats,
+        HashMap<String, Double> filterSelectivities,
+        LogicalJoinNode joinToRemove, Set<LogicalJoinNode> joinSet,
+        double bestCostSoFar, PlanCache pc) throws ParsingException {
 
         LogicalJoinNode j = joinToRemove;
 
