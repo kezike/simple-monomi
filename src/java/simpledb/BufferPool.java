@@ -3,6 +3,7 @@ package simpledb;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -28,6 +29,7 @@ public class BufferPool {
 
     private int numPgs;
     private ConcurrentHashMap<PageId, Page> idToPage;
+    private LinkedBlockingDeque<PageId> lruQueue;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -38,6 +40,7 @@ public class BufferPool {
         // some code goes here
         this.numPgs = numPages;
         this.idToPage = new ConcurrentHashMap<PageId, Page>();
+        this.lruQueue = new LinkedBlockingDeque<PageId>();
     }
     
     public static int getPageSize() {
@@ -83,6 +86,7 @@ public class BufferPool {
           page = table.readPage(pid);
           this.idToPage.put(pid, page);
         }
+        this.lruQueue.add(pid);
         return page;
     }
 
@@ -155,7 +159,9 @@ public class BufferPool {
         PageId pid = t.getRecordId().getPageId();
         for (Page pageAffected : pagesAffected) {
           pageAffected.markDirty(true, tid);
-          this.idToPage.put(pageAffected.getId(), pageAffected);
+          PageId pAffId = pageAffected.getId();
+          this.idToPage.put(pAffId, pageAffected);
+          this.lruQueue.add(pAffId);
         }
     }
 
@@ -183,7 +189,9 @@ public class BufferPool {
         ArrayList<Page> pagesAffected = table.deleteTuple(tid, t);
         for (Page pageAffected : pagesAffected) {
           pageAffected.markDirty(true, tid);
-          this.idToPage.put(pageAffected.getId(), pageAffected);
+          PageId pAffId = pageAffected.getId();
+          this.idToPage.put(pAffId, pageAffected);
+          this.lruQueue.add(pAffId);
         }
     }
 
@@ -213,6 +221,9 @@ public class BufferPool {
         // some code goes here
         // not necessary for lab1
         this.idToPage.remove(pid);
+        while (this.lruQueue.remove(pid)) {
+          continue;
+        }
     }
 
     /**
@@ -226,6 +237,7 @@ public class BufferPool {
     	Catalog catalog = Database.getCatalog();
     	DbFile table = catalog.getDatabaseFile(tableId);
     	Page page = this.idToPage.get(pid);
+        this.lruQueue.add(pid);
     	TransactionId tid = new TransactionId();
     	if (page != null) {
     	  table.writePage(page);
@@ -247,7 +259,7 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
-        PageId lru = null;
+        /*PageId lru = null;
         Set<PageId> pids = this.idToPage.keySet();
         for (PageId pid : pids) {
           if (lru == null) {
@@ -264,7 +276,17 @@ public class BufferPool {
             this.discardPage(lru);
           } catch (IOException ioExn) {
           }
+        }*/
+        PageId lru;
+        try {
+          lru = this.lruQueue.remove();
+        } catch (NoSuchElementException nseExn) {
+          return;
+        }
+        try {
+          this.flushPage(lru);
+          this.discardPage(lru);
+        } catch (IOException ioExn) {
         }
     }
-
 }

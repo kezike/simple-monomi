@@ -245,9 +245,7 @@ public class JoinOptimizer {
             bestPlan.cost = Double.POSITIVE_INFINITY;
             bestPlan.card = Integer.MAX_VALUE;
             bestPlan.plan = new Vector<LogicalJoinNode>();
-            // Set<Set<LogicalJoinNode>> joinSubsetsInner = this.enumerateSubsets(new Vector(joinSubsetOuter), i - 1);
             for (LogicalJoinNode joinNode : joinSet) {
-              // Vector<LogicalJoinNode> subPlan = optJoin.getOrder(joinNode);
               CostCard plan = this.computeCostAndCardOfSubplan(stats, filterSelectivities, joinNode, joinSet, bestPlan.cost, optJoinPlan);
               if (plan == null) {
                 continue;
