@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.HashSet;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -29,7 +30,8 @@ public class BufferPool {
 
     private int numPgs;
     private ConcurrentHashMap<PageId, Page> idToPage;
-    private LinkedBlockingDeque<PageId> lruQueue;
+    // private LinkedBlockingDeque<PageId> lruQueue;
+    private HashSet<PageId> pids;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -40,7 +42,8 @@ public class BufferPool {
         // some code goes here
         this.numPgs = numPages;
         this.idToPage = new ConcurrentHashMap<PageId, Page>();
-        this.lruQueue = new LinkedBlockingDeque<PageId>();
+        // this.lruQueue = new LinkedBlockingDeque<PageId>();
+        this.pids = new HashSet<PageId>();
     }
     
     public static int getPageSize() {
@@ -86,7 +89,8 @@ public class BufferPool {
           page = table.readPage(pid);
           this.idToPage.put(pid, page);
         }
-        this.lruQueue.add(pid);
+        // this.lruQueue.add(pid);
+        this.pids.add(pid);
         return page;
     }
 
@@ -161,7 +165,8 @@ public class BufferPool {
           pageAffected.markDirty(true, tid);
           PageId pAffId = pageAffected.getId();
           this.idToPage.put(pAffId, pageAffected);
-          this.lruQueue.add(pAffId);
+          // this.lruQueue.add(pAffId);
+          this.pids.add(pAffId);
         }
     }
 
@@ -191,7 +196,8 @@ public class BufferPool {
           pageAffected.markDirty(true, tid);
           PageId pAffId = pageAffected.getId();
           this.idToPage.put(pAffId, pageAffected);
-          this.lruQueue.add(pAffId);
+          // this.lruQueue.add(pAffId);
+          this.pids.add(pAffId);
         }
     }
 
@@ -221,9 +227,10 @@ public class BufferPool {
         // some code goes here
         // not necessary for lab1
         this.idToPage.remove(pid);
-        while (this.lruQueue.remove(pid)) {
+        /*while (this.lruQueue.remove(pid)) {
           continue;
-        }
+        }*/
+        this.pids.remove(pid);
     }
 
     /**
@@ -237,7 +244,8 @@ public class BufferPool {
     	Catalog catalog = Database.getCatalog();
     	DbFile table = catalog.getDatabaseFile(tableId);
     	Page page = this.idToPage.get(pid);
-        this.lruQueue.add(pid);
+        // this.lruQueue.add(pid);
+        this.pids.add(pid);
     	TransactionId tid = new TransactionId();
     	if (page != null) {
     	  table.writePage(page);
@@ -247,7 +255,7 @@ public class BufferPool {
 
     /** Write all pages of the specified transaction to disk.
      */
-    public synchronized  void flushPages(TransactionId tid) throws IOException {
+    public synchronized void flushPages(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
     }
@@ -256,28 +264,10 @@ public class BufferPool {
      * Discards a page from the buffer pool.
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
-    private synchronized  void evictPage() throws DbException {
+    private synchronized void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
-        /*PageId lru = null;
-        Set<PageId> pids = this.idToPage.keySet();
-        for (PageId pid : pids) {
-          if (lru == null) {
-            lru = pid;
-            continue;
-          }
-          if (pid.getTableId() < lru.getTableId() && pid.getPageNumber() < lru.getPageNumber()) {
-            lru = pid;
-          }
-        }
-        if (lru != null) {
-          try {
-            this.flushPage(lru);
-            this.discardPage(lru);
-          } catch (IOException ioExn) {
-          }
-        }*/
-        PageId lru;
+        /*PageId lru;
         try {
           lru = this.lruQueue.remove();
         } catch (NoSuchElementException nseExn) {
@@ -287,6 +277,18 @@ public class BufferPool {
           this.flushPage(lru);
           this.discardPage(lru);
         } catch (IOException ioExn) {
+        }*/
+        PageId pid;
+        try {
+          pid = this.pids.iterator().next();
+        } catch (NoSuchElementException nseExn) {
+          return;
+        }
+        try {
+          this.flushPage(pid);
+          this.discardPage(pid);
+        } catch (IOException ioExn) {
         }
     }
 }
+

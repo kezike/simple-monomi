@@ -3,13 +3,13 @@
   <persistedState key="memento" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#xA;&lt;workbench>&#xA;&lt;mruList/>&#xA;&lt;/workbench>"/>
   <tags>activeSchemeId:org.eclipse.ui.defaultAcceleratorConfiguration</tags>
   <tags>ModelMigrationProcessor.001</tags>
-  <children xsi:type="basic:TrimmedWindow" xmi:id="_TamEcqOREeePrJF1TQzn9Q" elementId="IDEWindow" contributorURI="platform:/plugin/org.eclipse.platform" selectedElement="_T18jsqOREeePrJF1TQzn9Q" label="%trimmedwindow.label.eclipseSDK" x="42" y="68" width="1024" height="768">
+  <children xsi:type="basic:TrimmedWindow" xmi:id="_TamEcqOREeePrJF1TQzn9Q" elementId="IDEWindow" contributorURI="platform:/plugin/org.eclipse.platform" selectedElement="_T18jsqOREeePrJF1TQzn9Q" label="%trimmedwindow.label.eclipseSDK" x="2" y="62" width="1438" height="768">
     <persistedState key="coolBarVisible" value="true"/>
     <persistedState key="perspectiveBarVisible" value="true"/>
     <persistedState key="isRestored" value="true"/>
     <persistedState key="show_in_time" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#xA;&lt;show_in_time/>"/>
     <persistedState key="workingSets" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#xA;&lt;workingSets/>"/>
-    <persistedState key="aggregateWorkingSetId"/>
+    <persistedState key="aggregateWorkingSetId" value="Aggregate for window 1509419112429"/>
     <tags>topLevel</tags>
     <children xsi:type="basic:PartSashContainer" xmi:id="_T18jsqOREeePrJF1TQzn9Q" selectedElement="_T18js6OREeePrJF1TQzn9Q" horizontal="true">
       <children xsi:type="advanced:PerspectiveStack" xmi:id="_T18js6OREeePrJF1TQzn9Q" elementId="org.eclipse.ui.ide.perspectivestack" containerData="7500" selectedElement="_UGdr8KOREeePrJF1TQzn9Q">
@@ -132,7 +132,7 @@
       </children>
     </sharedElements>
     <sharedElements xsi:type="basic:Part" xmi:id="_UE0tMKOREeePrJF1TQzn9Q" elementId="org.eclipse.ui.navigator.ProjectExplorer" contributionURI="bundleclass://org.eclipse.ui.workbench/org.eclipse.ui.internal.e4.compatibility.CompatibilityView" label="Project Explorer" iconURI="platform:/plugin/org.eclipse.ui.navigator.resources/icons/full/eview16/resource_persp.gif" tooltip="" closeable="true">
-      <persistedState key="memento" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#xA;&lt;view CommonNavigator.LINKING_ENABLED=&quot;0&quot; org.eclipse.ui.navigator.resources.workingSets.showTopLevelWorkingSets=&quot;0&quot;/>"/>
+      <persistedState key="memento" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#xA;&lt;view CommonNavigator.LINKING_ENABLED=&quot;0&quot; currentWorkingSetName=&quot;Aggregate for window 1509419112429&quot; org.eclipse.ui.navigator.resources.workingSets.showTopLevelWorkingSets=&quot;0&quot;/>"/>
       <tags>View</tags>
       <tags>categoryTag:General</tags>
       <tags>active</tags>
@@ -226,7 +226,7 @@
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_T5BF0KOREeePrJF1TQzn9Q" elementId="org.eclipse.ui.workbench.file">
         <tags>Draggable</tags>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_T5N6IKOREeePrJF1TQzn9Q" elementId="print" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/print_edit.png" tooltip="Print" enabled="false" command="_TbSBFqOREeePrJF1TQzn9Q"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_S1rwEL3pEeeTZrIEl4f5jA" elementId="print" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/print_edit.png" tooltip="Print" command="_TbSBFqOREeePrJF1TQzn9Q"/>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_T5Bs4KOREeePrJF1TQzn9Q" elementId="additions" toBeRendered="false">
         <tags>toolbarSeparator</tags>
@@ -253,7 +253,7 @@
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_T5CT8KOREeePrJF1TQzn9Q" elementId="org.eclipse.ui.workbench.navigate">
         <tags>Draggable</tags>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_T5QWYKOREeePrJF1TQzn9Q" elementId="org.eclipse.ui.window.pinEditor" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/pin_editor.png" tooltip="Pin Editor" type="Check" command="_TbRZ5qOREeePrJF1TQzn9Q"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_S1vacL3pEeeTZrIEl4f5jA" elementId="org.eclipse.ui.window.pinEditor" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/pin_editor.png" tooltip="Pin Editor" type="Check" command="_TbRZ5qOREeePrJF1TQzn9Q"/>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_T5CT8aOREeePrJF1TQzn9Q" elementId="group.editor" toBeRendered="false">
         <tags>toolbarSeparator</tags>
@@ -857,7 +857,7 @@
       <tags>platform:cocoa</tags>
       <parameters xmi:id="_TclBc6OREeePrJF1TQzn9Q" elementId="org.eclipse.ui.views.showView.viewId" name="org.eclipse.ui.views.showView.viewId" value="org.eclipse.jdt.ui.PackageExplorer"/>
     </bindings>
-    <bindings xmi:id="_Tc05E6OREeePrJF1TQzn9Q" keySequence="COMMAND+CTRL+F" command="_Tc05EaOREeePrJF1TQzn9Q"/>
+    <bindings xmi:id="_SYW64L3pEeeTZrIEl4f5jA" keySequence="COMMAND+CTRL+F" command="_Tc05EaOREeePrJF1TQzn9Q"/>
   </bindingTables>
   <bindingTables xmi:id="_TcF5QqOREeePrJF1TQzn9Q" elementId="org.eclipse.mylyn.tasks.ui.views.tasks" bindingContext="_TbYHoKOREeePrJF1TQzn9Q">
     <bindings xmi:id="_TcF5Q6OREeePrJF1TQzn9Q" keySequence="ALT+SHIFT+ARROW_DOWN" command="_TbLTaKOREeePrJF1TQzn9Q"/>
@@ -1033,7 +1033,7 @@
     <bindings xmi:id="_TcapZaOREeePrJF1TQzn9Q" keySequence="COMMAND+1" command="_TbT2OaOREeePrJF1TQzn9Q"/>
   </bindingTables>
   <bindingTables xmi:id="_Tc2HMKOREeePrJF1TQzn9Q" contributorURI="platform:/fragment/org.eclipse.e4.ui.workbench.renderers.swt.cocoa" bindingContext="_TamEd6OREeePrJF1TQzn9Q">
-    <bindings xmi:id="_Tc2HMaOREeePrJF1TQzn9Q" keySequence="M1+W" command="_Tc1gIqOREeePrJF1TQzn9Q"/>
+    <bindings xmi:id="_SYXh8L3pEeeTZrIEl4f5jA" keySequence="M1+W" command="_Tc1gIqOREeePrJF1TQzn9Q"/>
   </bindingTables>
   <bindingTables xmi:id="_UEsxYKOREeePrJF1TQzn9Q" bindingContext="_UEsKUKOREeePrJF1TQzn9Q"/>
   <bindingTables xmi:id="_UEsxYqOREeePrJF1TQzn9Q" bindingContext="_UEsxYaOREeePrJF1TQzn9Q"/>

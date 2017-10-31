@@ -354,7 +354,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
 
         // Set the last boolean here to 'true' in order to have orderJoins()
         // print out its logic
-        result = j.orderJoins(stats, filterSelectivities, false);
+        result = j.orderJoins(stats, filterSelectivities, true);
 
         // There are only three join nodes; if you're only re-ordering the join nodes,
         // you shouldn't end up with more than you started with
@@ -421,7 +421,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
                 2, "c");
         HeapFile smallHeapFileN = createDuplicateHeapFile(smallHeapFileTuples,
                 2, "c");
-
+        
         ArrayList<ArrayList<Integer>> bigHeapFileTuples = new ArrayList<ArrayList<Integer>>();
         for (int i = 0; i < 100000; i++) {
             bigHeapFileTuples.add(smallHeapFileTuples.get(i % 100));
@@ -446,7 +446,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
         Database.getCatalog().addTable(smallHeapFileL, "l");
         Database.getCatalog().addTable(smallHeapFileM, "m");
         Database.getCatalog().addTable(smallHeapFileN, "n");
-
+                
         // Come up with join statistics for the tables
         stats.put("bigTable", new TableStats(bigHeapFile.getId(), IO_COST));
         stats.put("a", new TableStats(smallHeapFileA.getId(), IO_COST));
@@ -463,7 +463,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
         stats.put("l", new TableStats(smallHeapFileG.getId(), IO_COST));
         stats.put("m", new TableStats(smallHeapFileG.getId(), IO_COST));
         stats.put("n", new TableStats(smallHeapFileG.getId(), IO_COST));
-
+        
         // Put in some filter selectivities
         filterSelectivities.put("bigTable", 1.0);
         filterSelectivities.put("a", 1.0);
@@ -497,7 +497,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
         nodes.add(new LogicalJoinNode("m", "n", "c1", "c1", Predicate.Op.EQUALS));
         nodes.add(new LogicalJoinNode("n", "bigTable", "c0", "c0",
                 Predicate.Op.EQUALS));
-
+                
         // Make sure we don't give the nodes to the optimizer in a nice order
         Collections.shuffle(nodes);
         Parser p = new Parser();
@@ -506,15 +506,20 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
                         tid,
                         "SELECT COUNT(a.c0) FROM bigTable, a, b, c, d, e, f, g, h, i, j, k, l, m, n WHERE bigTable.c0 = n.c0 AND a.c1 = b.c1 AND b.c0 = c.c0 AND c.c1 = d.c1 AND d.c0 = e.c0 AND e.c1 = f.c1 AND f.c0 = g.c0 AND g.c1 = h.c1 AND h.c0 = i.c0 AND i.c1 = j.c1 AND j.c0 = k.c0 AND k.c1 = l.c1 AND l.c0 = m.c0 AND m.c1 = n.c1;"),
                 nodes);
-
+        
+        System.out.println("Ordering Joins...");
+        
         // Set the last boolean here to 'true' in order to have orderJoins()
         // print out its logic
-        result = j.orderJoins(stats, filterSelectivities, false);
+        result = j.orderJoins(stats, filterSelectivities, true);
+        
+        System.out.println("Ordered Joins!");
 
         // If you're only re-ordering the join nodes,
         // you shouldn't end up with more than you started with
         Assert.assertEquals(result.size(), nodes.size());
-
+        
+        System.out.println("TABLE ALIAS: " + result.get(result.size() - 1).t2Alias);
         // Make sure that "bigTable" is the outermost table in the join
         Assert.assertEquals(result.get(result.size() - 1).t2Alias, "bigTable");
     }
@@ -610,7 +615,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
 
         // Set the last boolean here to 'true' in order to have orderJoins()
         // print out its logic
-        result = j.orderJoins(stats, filterSelectivities, false);
+        result = j.orderJoins(stats, filterSelectivities, true);
 
         // If you're only re-ordering the join nodes,
         // you shouldn't end up with more than you started with

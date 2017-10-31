@@ -111,8 +111,8 @@ public class JoinOptimizer {
             // HINT: You may need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic
             // nested-loops join.
-            double joinCostIo = cost2 + card2 * cost1;
-            double joinCostCpu = card2 * card1;
+            double joinCostIo = cost1 + card1 * cost2;
+            double joinCostCpu = card1 * card2;
             double joinCostTotal = joinCostIo + joinCostCpu;
             return joinCostTotal;
         }
@@ -164,8 +164,10 @@ public class JoinOptimizer {
         if (joinOp == Predicate.Op.EQUALS) {
           if (t1pkey && !t2pkey) {
             return card2;
+        	// return Math.min(card1, card2);
           } else if (t2pkey && !t1pkey) {
             return card1;
+        	// return Math.min(card1, card2);
           } else if (t1pkey && t2pkey) {
             return Math.min(card1, card2);
           } else {
@@ -238,21 +240,18 @@ public class JoinOptimizer {
         // some code goes here
         PlanCache optJoinPlan = new PlanCache();
         optJoinPlan.addPlan(new HashSet<LogicalJoinNode>(), 0.0, 0, new Vector<LogicalJoinNode>());
-        for (int i = 1; i <= this.joins.size(); i++) {
+        int numJoins = this.joins.size();
+        for (int i = 1; i <= numJoins; i++) {
           Set<Set<LogicalJoinNode>> joinSets = this.enumerateSubsets(this.joins, i);
           for (Set<LogicalJoinNode> joinSet : joinSets) {
             CostCard bestPlan = new CostCard();
-            bestPlan.cost = Double.POSITIVE_INFINITY;
+            bestPlan.cost = Double.MAX_VALUE;
             bestPlan.card = Integer.MAX_VALUE;
             bestPlan.plan = new Vector<LogicalJoinNode>();
             for (LogicalJoinNode joinNode : joinSet) {
               CostCard plan = this.computeCostAndCardOfSubplan(stats, filterSelectivities, joinNode, joinSet, bestPlan.cost, optJoinPlan);
-              if (plan == null) {
-                continue;
-              }
-              if (plan.cost < bestPlan.cost) {
-                bestPlan = plan;
-              }
+              if (plan == null) { continue; }
+              if (plan.cost < bestPlan.cost) { bestPlan = plan; }
             }
             optJoinPlan.addPlan(joinSet, bestPlan.cost, bestPlan.card, bestPlan.plan);
           }
