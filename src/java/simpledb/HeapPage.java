@@ -303,9 +303,9 @@ public class HeapPage implements Page {
         // some code goes here
 	    // not necessary for lab1
     	if (dirty) {
-    		this.dirtyTid = tid;
+    	  this.dirtyTid = tid;
     	} else {
-    		this.dirtyTid = null;    		
+    	  this.dirtyTid = null;
     	}
     }
 
@@ -314,7 +314,7 @@ public class HeapPage implements Page {
      */
     public TransactionId isDirty() {
         // some code goes here
-	// Not necessary for lab1
+	    // Not necessary for lab1
         return this.dirtyTid;
     }
 

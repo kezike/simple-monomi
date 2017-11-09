@@ -3,7 +3,6 @@ package simpledb;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.HashSet;
 
 /**
@@ -30,8 +29,8 @@ public class BufferPool {
 
     private int numPgs;
     private ConcurrentHashMap<PageId, Page> idToPage;
-    // private LinkedBlockingDeque<PageId> lruQueue;
     private HashSet<PageId> pids;
+    private LockManager lockManager;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -42,22 +41,22 @@ public class BufferPool {
         // some code goes here
         this.numPgs = numPages;
         this.idToPage = new ConcurrentHashMap<PageId, Page>();
-        // this.lruQueue = new LinkedBlockingDeque<PageId>();
         this.pids = new HashSet<PageId>();
+        this.lockManager = new LockManager();
     }
     
     public static int getPageSize() {
-      return pageSize;
+        return pageSize;
     }
     
     // THIS FUNCTION SHOULD ONLY BE USED FOR TESTING!!
     public static void setPageSize(int pageSize) {
-    	BufferPool.pageSize = pageSize;
+        BufferPool.pageSize = pageSize;
     }
     
     // THIS FUNCTION SHOULD ONLY BE USED FOR TESTING!!
     public static void resetPageSize() {
-    	BufferPool.pageSize = DEFAULT_PAGE_SIZE;
+        BufferPool.pageSize = DEFAULT_PAGE_SIZE;
     }
 
     /**
@@ -78,6 +77,11 @@ public class BufferPool {
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
+        if (perm.equals(Permissions.READ_ONLY)) {
+          this.lockManager.acquireSLock(tid, pid);
+        } else if (perm.equals(Permissions.READ_WRITE)) {
+          this.lockManager.acquireXLock(tid, pid);
+        }
         Catalog catalog = Database.getCatalog();
         Page page = this.idToPage.get(pid);
         if (page == null) {
@@ -88,10 +92,29 @@ public class BufferPool {
           DbFile table = catalog.getDatabaseFile(tableId);
           page = table.readPage(pid);
           this.idToPage.put(pid, page);
+          this.pids.add(pid);
         }
-        // this.lruQueue.add(pid);
-        this.pids.add(pid);
         return page;
+    }
+
+    /**
+     * Acquire write access on page
+     *
+     * @param tid the ID of the transaction requesting write access
+     * @param pid the ID of the page of interest
+    */
+    public void acquireXLock(TransactionId tid, PageId pid) {
+        this.lockManager.acquireXLock(tid, pid);
+    }
+
+    /**
+     * Acquire read access on page
+     *
+     * @param tid the ID of the transaction requesting read access
+     * @param pid the ID of the page of interest
+    */
+    public void acquireSLock(TransactionId tid, PageId pid) {
+        this.lockManager.acquireSLock(tid, pid);
     }
 
     /**
@@ -103,9 +126,10 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      * @param pid the ID of the page to unlock
      */
-    public  void releasePage(TransactionId tid, PageId pid) {
+    public void releasePage(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for lab1|lab2
+        this.lockManager.releasePage(tid, pid);
     }
 
     /**
@@ -116,13 +140,14 @@ public class BufferPool {
     public void transactionComplete(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+        this.transactionComplete(tid, true);
     }
 
     /** Return true if the specified transaction has a lock on the specified page */
-    public boolean holdsLock(TransactionId tid, PageId p) {
+    public boolean holdsLock(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for lab1|lab2
-        return false;
+        return this.lockManager.holdsLock(tid, pid);
     }
 
     /**
@@ -136,6 +161,42 @@ public class BufferPool {
         throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+        HashSet<PageId> xPids = this.lockManager.getXLockStatus(tid);
+        HashSet<PageId> sPids = this.lockManager.getSLockStatus(tid);
+        Catalog catalog = Database.getCatalog();
+        if (commit) {
+          if (xPids != null) {
+            for (PageId pid : xPids) {
+              this.flushPage(pid);
+              this.releasePage(tid, pid);
+            }
+          }
+          if (sPids != null) {
+            for (PageId pid : sPids) {
+              this.flushPage(pid);
+              this.releasePage(tid, pid);
+            }
+          }
+    	} else {
+          if (xPids != null) {
+            for (PageId pid : xPids) {
+              int tableId = pid.getTableId();
+              DbFile table = catalog.getDatabaseFile(tableId);
+              Page page = table.readPage(pid);
+              this.idToPage.put(pid, page);
+              this.pids.add(pid);
+            }
+          }
+          if (sPids != null) {
+            for (PageId pid : sPids) {
+              int tableId = pid.getTableId();
+              DbFile table = catalog.getDatabaseFile(tableId);
+              Page page = table.readPage(pid);
+              this.idToPage.put(pid, page);
+              this.pids.add(pid);
+            }
+          }
+        }
     }
 
     /**
@@ -160,13 +221,11 @@ public class BufferPool {
         Catalog catalog = Database.getCatalog();
         DbFile table = catalog.getDatabaseFile(tableId);
         ArrayList<Page> pagesAffected = table.insertTuple(tid, t);
-        PageId pid = t.getRecordId().getPageId();
         for (Page pageAffected : pagesAffected) {
           pageAffected.markDirty(true, tid);
           PageId pAffId = pageAffected.getId();
           this.idToPage.put(pAffId, pageAffected);
-          // this.lruQueue.add(pAffId);
-          this.pids.add(pAffId);
+          this.pids.remove(pAffId);
         }
     }
 
@@ -183,7 +242,7 @@ public class BufferPool {
      * @param tid the transaction deleting the tuple.
      * @param t the tuple to delete
      */
-    public  void deleteTuple(TransactionId tid, Tuple t)
+    public void deleteTuple(TransactionId tid, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
@@ -196,8 +255,7 @@ public class BufferPool {
           pageAffected.markDirty(true, tid);
           PageId pAffId = pageAffected.getId();
           this.idToPage.put(pAffId, pageAffected);
-          // this.lruQueue.add(pAffId);
-          this.pids.add(pAffId);
+          this.pids.remove(pAffId);
         }
     }
 
@@ -227,9 +285,6 @@ public class BufferPool {
         // some code goes here
         // not necessary for lab1
         this.idToPage.remove(pid);
-        /*while (this.lruQueue.remove(pid)) {
-          continue;
-        }*/
         this.pids.remove(pid);
     }
 
@@ -237,19 +292,19 @@ public class BufferPool {
      * Flushes a certain page to disk
      * @param pid an ID indicating the page to flush
      */
-    private synchronized  void flushPage(PageId pid) throws IOException {
+    private synchronized void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for lab1
     	int tableId = pid.getTableId();
     	Catalog catalog = Database.getCatalog();
     	DbFile table = catalog.getDatabaseFile(tableId);
     	Page page = this.idToPage.get(pid);
-        // this.lruQueue.add(pid);
-        this.pids.add(pid);
     	TransactionId tid = new TransactionId();
     	if (page != null) {
     	  table.writePage(page);
           page.markDirty(false, tid);
+          this.pids.add(pid);
+          this.idToPage.put(pid, page);
     	}
     }
 
@@ -267,28 +322,51 @@ public class BufferPool {
     private synchronized void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
-        /*PageId lru;
-        try {
-          lru = this.lruQueue.remove();
-        } catch (NoSuchElementException nseExn) {
-          return;
-        }
-        try {
-          this.flushPage(lru);
-          this.discardPage(lru);
-        } catch (IOException ioExn) {
+    	// TransactionId tid;
+        // PageId pid;
+        // Page page;
+        // Iterator<PageId> pidIter = this.pids.iterator();
+        /*while (true) {
+          try {
+            tid = new TransactionId();
+            pid = pidIter.next();
+            System.out.println("Getting Page...");
+            Page page = this.getPage(tid, pid, Permissions.READ_WRITE);
+            System.out.println("Got Page!");
+            TransactionId dirty = page.isDirty();
+            if (dirty != null) {
+              break;
+            }
+            this.releasePage(tid, pid);
+          } catch (NoSuchElementException nseExn) {
+            throw new DbException("No clean pages available for eviction!");
+          } catch (TransactionAbortedException txnAbExn) {
+            return;
+          }
         }*/
-        PageId pid;
-        try {
-          pid = this.pids.iterator().next();
-        } catch (NoSuchElementException nseExn) {
-          return;
+        /*Set<Map.Entry<PageId, Page>> entrySet = this.idToPage.entrySet();
+        for (Map.Entry<PageId, Page> entry : entrySet) {
+          PageId pid = entry.getKey();
+          Page page = entry.getValue();
+          TransactionId dirty = page.isDirty();
+          if (dirty == null) {
+            // try {
+              // this.flushPage(pid);
+              this.discardPage(pid);
+            // } catch (IOException ioExn) {
+            // }
+            return;
+          }
         }
+        throw new DbException("No clean pages available for eviction!");*/
         try {
-          this.flushPage(pid);
+          PageId pid = this.pids.iterator().next();
+          // this.flushPage(pid);
           this.discardPage(pid);
-        } catch (IOException ioExn) {
-        }
+        } catch (NoSuchElementException nseExn) {
+          throw new DbException("No clean pages available for eviction!");
+        } // catch (IOException ioExn) {
+        // }
     }
 }
 

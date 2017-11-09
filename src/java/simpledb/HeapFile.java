@@ -223,9 +223,12 @@ public class HeapFile implements DbFile {
             foundPage = true;
             break;
           } catch (DbException dbExn) {
+            pid = new HeapPageId(this.getId(), i);
+            bufferPool.releasePage(tid, pid);
           }
         }
         if (!foundPage) {
+          pid = new HeapPageId(this.getId(), numPages);
           int pageSize = BufferPool.getPageSize();
           int offset = numPages * pageSize;
           byte[] pageData = new byte[pageSize];
@@ -234,7 +237,6 @@ public class HeapFile implements DbFile {
           pageRaf.seek(offset);
           pageRaf.write(pageData);
           pageRaf.close();
-          pid = new HeapPageId(this.getId(), numPages);
           page = (HeapPage) this.readPage(pid);
           page.insertTuple(t);
           page = (HeapPage) bufferPool.getPage(tid, pid, Permissions.READ_WRITE);
