@@ -64,7 +64,7 @@ public class HeapFile implements DbFile {
               }
               BufferPool bufferPool = Database.getBufferPool();
               PageId pid = new HeapPageId(this.heapFile.getId(), this.pgIdx);
-              HeapPage page = (HeapPage) bufferPool.getPage(this.txnId, pid, Permissions.READ_WRITE);
+              HeapPage page = (HeapPage) bufferPool.getPage(this.txnId, pid, Permissions.READ_ONLY);
               this.heapPageIter = page.iterator();
             } while (!this.heapPageIter.hasNext());
             return true;

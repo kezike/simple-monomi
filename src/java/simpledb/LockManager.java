@@ -33,7 +33,7 @@ public class LockManager {
             }
             sTids = this.sLocksPidToTid.get(pid);
             if (sTids != null) {
-              if (!sTids.contains(tid)) {
+              if (!sTids.contains(tid) && sTids.size() == 1) {
                 sLockIsFree = false;
               }
             }
@@ -48,10 +48,10 @@ public class LockManager {
               break;
             }
           }
-          /*try {
+          try {
             Thread.sleep(5);
           } catch (InterruptedException e) {
-          }*/
+          }
         }
     }
     
@@ -82,10 +82,10 @@ public class LockManager {
               break;
             }
           }
-          /*try {
+          try {
             Thread.sleep(5);
           } catch (InterruptedException e) {
-          }*/
+          }
         }
     }
 

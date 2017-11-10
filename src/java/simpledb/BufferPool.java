@@ -166,34 +166,42 @@ public class BufferPool {
         Catalog catalog = Database.getCatalog();
         if (commit) {
           if (xPids != null) {
-            for (PageId pid : xPids) {
-              this.flushPage(pid);
-              this.releasePage(tid, pid);
+            synchronized(xPids) {
+              for (PageId pid : xPids) {
+                this.flushPage(pid);
+                this.releasePage(tid, pid);
+              }
             }
           }
           if (sPids != null) {
-            for (PageId pid : sPids) {
-              this.flushPage(pid);
-              this.releasePage(tid, pid);
+            synchronized(sPids) {
+              for (PageId pid : sPids) {
+                this.flushPage(pid);
+                this.releasePage(tid, pid);
+              }
             }
           }
-    	} else {
+        } else {
           if (xPids != null) {
-            for (PageId pid : xPids) {
-              int tableId = pid.getTableId();
-              DbFile table = catalog.getDatabaseFile(tableId);
-              Page page = table.readPage(pid);
-              this.idToPage.put(pid, page);
-              this.pids.add(pid);
+            synchronized(xPids) {
+              for (PageId pid : xPids) {
+                int tableId = pid.getTableId();
+                DbFile table = catalog.getDatabaseFile(tableId);
+                Page page = table.readPage(pid);
+                this.idToPage.put(pid, page);
+                this.pids.add(pid);
+              }
             }
           }
           if (sPids != null) {
-            for (PageId pid : sPids) {
-              int tableId = pid.getTableId();
-              DbFile table = catalog.getDatabaseFile(tableId);
-              Page page = table.readPage(pid);
-              this.idToPage.put(pid, page);
-              this.pids.add(pid);
+            synchronized(sPids) {
+              for (PageId pid : sPids) {
+                int tableId = pid.getTableId();
+                DbFile table = catalog.getDatabaseFile(tableId);
+                Page page = table.readPage(pid);
+                this.idToPage.put(pid, page);
+                this.pids.add(pid);
+              }
             }
           }
         }
