@@ -56,7 +56,7 @@ public class HeapFile implements DbFile {
               if (heapPageIter.hasNext()) {
                 return true;
               }
-            } 
+            }
             do {
               this.pgIdx++;
               if (this.pgIdx == this.heapFile.numPages()) {
@@ -205,7 +205,7 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
-            throws DbException, IOException, TransactionAbortedException {
+        throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
         ArrayList<Page> pagesAffected = new ArrayList<Page>();
@@ -215,15 +215,14 @@ public class HeapFile implements DbFile {
         boolean foundPage = false;
         int numPages = this.numPages();
         for (int i = 0; i < numPages; i++) {
+          pid = new HeapPageId(this.getId(), i);
           try {
-            pid = new HeapPageId(this.getId(), i);
             page = (HeapPage) bufferPool.getPage(tid, pid, Permissions.READ_WRITE);
             page.insertTuple(t);
             pagesAffected.add(page);
             foundPage = true;
             break;
           } catch (DbException dbExn) {
-            pid = new HeapPageId(this.getId(), i);
             bufferPool.releasePage(tid, pid);
           }
         }

@@ -3,6 +3,7 @@ package simpledb;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
 import java.util.HashSet;
 
 /**
@@ -77,10 +78,10 @@ public class BufferPool {
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
-        if (perm.equals(Permissions.READ_ONLY)) {
-          this.lockManager.acquireSLock(tid, pid);
-        } else if (perm.equals(Permissions.READ_WRITE)) {
+        if (perm.equals(Permissions.READ_WRITE)) {
           this.lockManager.acquireXLock(tid, pid);
+        } else if (perm.equals(Permissions.READ_ONLY)) {
+          this.lockManager.acquireSLock(tid, pid);
         }
         Catalog catalog = Database.getCatalog();
         Page page = this.idToPage.get(pid);
@@ -161,48 +162,11 @@ public class BufferPool {
         throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
-        HashSet<PageId> xPids = this.lockManager.getXLockStatus(tid);
-        HashSet<PageId> sPids = this.lockManager.getSLockStatus(tid);
-        Catalog catalog = Database.getCatalog();
-        if (commit) {
-          if (xPids != null) {
-            synchronized(xPids) {
-              for (PageId pid : xPids) {
-                this.flushPage(pid);
-                this.releasePage(tid, pid);
-              }
-            }
-          }
-          if (sPids != null) {
-            synchronized(sPids) {
-              for (PageId pid : sPids) {
-                this.flushPage(pid);
-                this.releasePage(tid, pid);
-              }
-            }
-          }
-        } else {
-          if (xPids != null) {
-            synchronized(xPids) {
-              for (PageId pid : xPids) {
-                int tableId = pid.getTableId();
-                DbFile table = catalog.getDatabaseFile(tableId);
-                Page page = table.readPage(pid);
-                this.idToPage.put(pid, page);
-                this.pids.add(pid);
-              }
-            }
-          }
-          if (sPids != null) {
-            synchronized(sPids) {
-              for (PageId pid : sPids) {
-                int tableId = pid.getTableId();
-                DbFile table = catalog.getDatabaseFile(tableId);
-                Page page = table.readPage(pid);
-                this.idToPage.put(pid, page);
-                this.pids.add(pid);
-              }
-            }
+        synchronized (this.lockManager) {
+          if (commit) {
+            this.flushAndRelease(tid);
+          } else {
+            this.abortAndRelease(tid);
           }
         }
     }
@@ -275,10 +239,10 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for lab1
-    	Set<PageId> pids = this.idToPage.keySet();
-    	for (PageId pid : pids) {
+        Set<PageId> pids = this.idToPage.keySet();
+        for (PageId pid : pids) {
           this.flushPage(pid);
-    	}
+        }
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -321,6 +285,121 @@ public class BufferPool {
     public synchronized void flushPages(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+        Set<PageId> xPids = this.lockManager.getXLockStatus(tid);
+        Set<PageId> sPids = this.lockManager.getSLockStatus(tid);
+        if (xPids != null) {
+          synchronized (xPids) {
+            for (PageId pid : xPids) {
+              this.flushPage(pid);
+            }
+          }
+        }
+        if (sPids != null) {
+          synchronized (sPids) {
+            for (PageId pid : sPids) {
+              this.flushPage(pid);
+            }
+          }
+        }
+    }
+
+    /** Write all pages of the specified transaction to disk and release locks on pages.
+     */
+    public void flushAndRelease(TransactionId tid) throws IOException {
+        // some code goes here
+        // not necessary for lab1|lab2
+        synchronized (this.lockManager) {
+          Set<PageId> xPids = this.lockManager.getXLockStatus(tid);
+          Set<PageId> sPids = this.lockManager.getSLockStatus(tid);
+          if (xPids != null) {
+            synchronized (xPids) {
+              List<PageId> xPidsList = new ArrayList<PageId>(xPids);
+              for (PageId pid : xPidsList) {
+                this.flushPage(pid);
+                this.releasePage(tid, pid);
+              }
+            }
+          }
+          if (sPids != null) {
+            synchronized (sPids) {
+              List<PageId> sPidsList = new ArrayList<PageId>(sPids);
+              for (PageId pid : sPidsList) {
+                this.flushPage(pid);
+                this.releasePage(tid, pid);
+              }
+            }
+          }
+        }
+    }
+    
+    /** Abort specified transaction and restore bufferpool to on-disk state.
+     */
+    public synchronized void abort(TransactionId tid) throws IOException {
+        // some code goes here
+        // not necessary for lab1|lab2
+        Set<PageId> xPids = this.lockManager.getXLockStatus(tid);
+        Set<PageId> sPids = this.lockManager.getSLockStatus(tid);
+        Catalog catalog = Database.getCatalog();
+        if (xPids != null) {
+          synchronized (xPids) {
+            for (PageId pid : xPids) {
+              int tableId = pid.getTableId();
+              DbFile table = catalog.getDatabaseFile(tableId);
+              Page page = table.readPage(pid);
+              this.idToPage.put(pid, page);
+              this.pids.add(pid);
+            }
+          }
+        }
+        if (sPids != null) {
+          synchronized (sPids) {
+            for (PageId pid : sPids) {
+              int tableId = pid.getTableId();
+              DbFile table = catalog.getDatabaseFile(tableId);
+              Page page = table.readPage(pid);
+              this.idToPage.put(pid, page);
+              this.pids.add(pid);
+            }
+          }
+        }
+    }
+
+    /** Abort specified transaction, restore bufferpool to on-disk state, and release locks on pages.
+     */
+    public void abortAndRelease(TransactionId tid) throws IOException {
+        // some code goes here
+        // not necessary for lab1|lab2
+        synchronized (this.lockManager) {
+          Set<PageId> xPids = this.lockManager.getXLockStatus(tid);
+          Set<PageId> sPids = this.lockManager.getSLockStatus(tid);
+          Catalog catalog = Database.getCatalog();
+          if (xPids != null) {
+            synchronized (xPids) {
+              List<PageId> xPidsList = new ArrayList<PageId>(xPids);
+              for (PageId pid : xPidsList) {
+                int tableId = pid.getTableId();
+                DbFile table = catalog.getDatabaseFile(tableId);
+                Page page = table.readPage(pid);
+                this.idToPage.put(pid, page);
+                this.pids.add(pid);
+                this.releasePage(tid, pid);
+              }
+            }
+          }
+          if (sPids != null) {
+            synchronized (sPids) {
+              List<PageId> sPidsList = new ArrayList<PageId>(sPids);
+              for (PageId pid : sPidsList) {
+                int tableId = pid.getTableId();
+                DbFile table = catalog.getDatabaseFile(tableId);
+                Page page = table.readPage(pid);
+                this.idToPage.put(pid, page);
+                this.pids.add(pid);
+                this.releasePage(tid, pid);
+              }
+            }
+          }
+        }
     }
 
     /**
@@ -330,51 +409,11 @@ public class BufferPool {
     private synchronized void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
-    	// TransactionId tid;
-        // PageId pid;
-        // Page page;
-        // Iterator<PageId> pidIter = this.pids.iterator();
-        /*while (true) {
-          try {
-            tid = new TransactionId();
-            pid = pidIter.next();
-            System.out.println("Getting Page...");
-            Page page = this.getPage(tid, pid, Permissions.READ_WRITE);
-            System.out.println("Got Page!");
-            TransactionId dirty = page.isDirty();
-            if (dirty != null) {
-              break;
-            }
-            this.releasePage(tid, pid);
-          } catch (NoSuchElementException nseExn) {
-            throw new DbException("No clean pages available for eviction!");
-          } catch (TransactionAbortedException txnAbExn) {
-            return;
-          }
-        }*/
-        /*Set<Map.Entry<PageId, Page>> entrySet = this.idToPage.entrySet();
-        for (Map.Entry<PageId, Page> entry : entrySet) {
-          PageId pid = entry.getKey();
-          Page page = entry.getValue();
-          TransactionId dirty = page.isDirty();
-          if (dirty == null) {
-            // try {
-              // this.flushPage(pid);
-              this.discardPage(pid);
-            // } catch (IOException ioExn) {
-            // }
-            return;
-          }
-        }
-        throw new DbException("No clean pages available for eviction!");*/
         try {
           PageId pid = this.pids.iterator().next();
-          // this.flushPage(pid);
           this.discardPage(pid);
         } catch (NoSuchElementException nseExn) {
           throw new DbException("No clean pages available for eviction!");
-        } // catch (IOException ioExn) {
-        // }
+        }
     }
 }
-

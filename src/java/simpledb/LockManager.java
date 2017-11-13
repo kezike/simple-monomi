@@ -1,26 +1,27 @@
 package simpledb;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.Collections;
 
 /** Class for maintaining lock ownership information
 */
 public class LockManager {
-    private ConcurrentHashMap<PageId, TransactionId> xLocksPidToTid;
-    private ConcurrentHashMap<PageId, HashSet<TransactionId>> sLocksPidToTid;
-    private ConcurrentHashMap<TransactionId, HashSet<PageId>> xLocksTidToPid;
-    private ConcurrentHashMap<TransactionId, HashSet<PageId>> sLocksTidToPid;
+    public ConcurrentHashMap<PageId, TransactionId> xLocksPidToTid;
+    public ConcurrentHashMap<PageId, Set<TransactionId>> sLocksPidToTid;
+    public ConcurrentHashMap<TransactionId, Set<PageId>> xLocksTidToPid;
+    public ConcurrentHashMap<TransactionId, Set<PageId>> sLocksTidToPid;
 
     public LockManager() {
         this.xLocksPidToTid = new ConcurrentHashMap<PageId, TransactionId>();
-        this.sLocksPidToTid = new ConcurrentHashMap<PageId, HashSet<TransactionId>>();
-        this.xLocksTidToPid = new ConcurrentHashMap<TransactionId, HashSet<PageId>>();
-        this.sLocksTidToPid = new ConcurrentHashMap<TransactionId, HashSet<PageId>>();
+        this.sLocksPidToTid = new ConcurrentHashMap<PageId, Set<TransactionId>>();
+        this.xLocksTidToPid = new ConcurrentHashMap<TransactionId, Set<PageId>>();
+        this.sLocksTidToPid = new ConcurrentHashMap<TransactionId, Set<PageId>>();
     }
 
     public void acquireXLock(TransactionId tid, PageId pid) {
         TransactionId xTid;
-        HashSet<TransactionId> sTids;
+        Set<TransactionId> sTids;
         while (true) {
           synchronized (this) {
             boolean xLockIsFree = true;
@@ -33,25 +34,33 @@ public class LockManager {
             }
             sTids = this.sLocksPidToTid.get(pid);
             if (sTids != null) {
-              if (!sTids.contains(tid) && sTids.size() == 1) {
+              if (!sTids.contains(tid)) {
                 sLockIsFree = false;
+              } else {
+                if (sTids.size() == 1) {
+                  sLockIsFree = true;
+                } else {
+                  sLockIsFree = false;
+                }
               }
             }
             if (xLockIsFree && sLockIsFree) {
-              HashSet<PageId> xPids = this.xLocksTidToPid.get(tid);
+              Set<PageId> xPids = this.xLocksTidToPid.get(tid);
               if (xPids == null) {
-                xPids = new HashSet<PageId>();
+                xPids = Collections.synchronizedSet(new HashSet<PageId>());
               }
-              xPids.add(pid);
-              this.xLocksTidToPid.put(tid, xPids);
+              synchronized (xPids) {
+                xPids.add(pid);
+                this.xLocksTidToPid.put(tid, xPids);
+              }
               this.xLocksPidToTid.put(pid, tid);
               break;
             }
           }
-          try {
+          /*try {
             Thread.sleep(5);
           } catch (InterruptedException e) {
-          }
+          }*/
         }
     }
     
@@ -67,25 +76,29 @@ public class LockManager {
               }
             }
             if (xLockIsFree) {
-              HashSet<PageId> sPids = this.sLocksTidToPid.get(tid);
+              Set<PageId> sPids = this.sLocksTidToPid.get(tid);
               if (sPids == null) {
-                sPids = new HashSet<PageId>();
+                sPids = Collections.synchronizedSet(new HashSet<PageId>());
               }
-              sPids.add(pid);
-              this.sLocksTidToPid.put(tid, sPids);
-              HashSet<TransactionId> sTids = this.sLocksPidToTid.get(pid);
+              synchronized (sPids) {
+                sPids.add(pid);
+                this.sLocksTidToPid.put(tid, sPids);
+              }
+              Set<TransactionId> sTids = this.sLocksPidToTid.get(pid);
               if (sTids == null) {
-                sTids = new HashSet<TransactionId>();
+                sTids = Collections.synchronizedSet(new HashSet<TransactionId>());
               }
-              sTids.add(tid);
-              this.sLocksPidToTid.put(pid, sTids);
+              synchronized (sTids) {
+                sTids.add(tid);
+                this.sLocksPidToTid.put(pid, sTids);
+              }
               break;
             }
           }
-          try {
+          /*try {
             Thread.sleep(5);
           } catch (InterruptedException e) {
-          }
+          }*/
         }
     }
 
@@ -96,7 +109,7 @@ public class LockManager {
     }
 
     public synchronized boolean holdsSLock(TransactionId tid, PageId pid) {
-    	HashSet<TransactionId> sTids = this.sLocksPidToTid.get(pid);
+    	Set<TransactionId> sTids = this.sLocksPidToTid.get(pid);
         boolean holdsSLock = false;
         if (sTids != null) {
           if (sTids.contains(tid)) {
@@ -111,39 +124,41 @@ public class LockManager {
         return holdsLock;
     }
 
-    public synchronized void releasePage(TransactionId tid, PageId pid) {
-    	TransactionId xTid = this.xLocksPidToTid.get(pid);
-    	HashSet<TransactionId> sTids = this.sLocksPidToTid.get(pid);
-        HashSet<PageId> sPids = this.sLocksTidToPid.get(tid);
-        HashSet<PageId> xPids = this.xLocksTidToPid.get(tid);
-        if (tid.equals(xTid)) {
-          this.xLocksPidToTid.remove(pid);
-        }
-        if (sTids != null) {
-          sTids.remove(tid);
-          if (sTids.isEmpty()) {
-            this.sLocksPidToTid.remove(pid);
+    public void releasePage(TransactionId tid, PageId pid) {
+        synchronized (this) {
+          TransactionId xTid = this.xLocksPidToTid.get(pid);
+          Set<TransactionId> sTids = this.sLocksPidToTid.get(pid);
+          Set<PageId> xPids = this.xLocksTidToPid.get(tid);
+          Set<PageId> sPids = this.sLocksTidToPid.get(tid);
+          if (tid.equals(xTid)) {
+            this.xLocksPidToTid.remove(pid);
           }
-        }
-        if (sPids != null) {
-          sPids.remove(pid);
-          if (sPids.isEmpty()) {
-            this.sLocksTidToPid.remove(tid);
+          if (sTids != null) {
+            sTids.remove(tid);
+            if (sTids.isEmpty()) {
+              this.sLocksPidToTid.remove(pid);
+            }
           }
-        }
-        if (xPids != null) {
-          xPids.remove(pid);
-          if (xPids.isEmpty()) {
-            this.xLocksTidToPid.remove(tid);
+          if (sPids != null) {
+            sPids.remove(pid);
+            if (sPids.isEmpty()) {
+              this.sLocksTidToPid.remove(tid);
+            }
+          }
+          if (xPids != null) {
+            xPids.remove(pid);
+            if (xPids.isEmpty()) {
+              this.xLocksTidToPid.remove(tid);
+            }
           }
         }
     }
     
-    public HashSet<PageId> getXLockStatus(TransactionId tid) {
+    public Set<PageId> getXLockStatus(TransactionId tid) {
         return this.xLocksTidToPid.get(tid);
     }
     
-    public HashSet<PageId> getSLockStatus(TransactionId tid) {
+    public Set<PageId> getSLockStatus(TransactionId tid) {
         return this.sLocksTidToPid.get(tid);
     }
 }

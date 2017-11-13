@@ -447,7 +447,6 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
         Database.getCatalog().addTable(smallHeapFileM, "m");
         Database.getCatalog().addTable(smallHeapFileN, "n");
         
-        System.out.println("BUDDDDEEEEE BEFORE!!!");
         // Come up with join statistics for the tables
         stats.put("bigTable", new TableStats(bigHeapFile.getId(), IO_COST));
         stats.put("a", new TableStats(smallHeapFileA.getId(), IO_COST));
@@ -458,7 +457,6 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
         stats.put("f", new TableStats(smallHeapFileF.getId(), IO_COST));
         stats.put("g", new TableStats(smallHeapFileG.getId(), IO_COST));
         stats.put("h", new TableStats(smallHeapFileG.getId(), IO_COST));
-        System.out.println("BUDDDDEEEEE AFTER!!!");
         stats.put("i", new TableStats(smallHeapFileG.getId(), IO_COST));
         stats.put("j", new TableStats(smallHeapFileG.getId(), IO_COST));
         stats.put("k", new TableStats(smallHeapFileG.getId(), IO_COST));
@@ -508,20 +506,15 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
                         tid,
                         "SELECT COUNT(a.c0) FROM bigTable, a, b, c, d, e, f, g, h, i, j, k, l, m, n WHERE bigTable.c0 = n.c0 AND a.c1 = b.c1 AND b.c0 = c.c0 AND c.c1 = d.c1 AND d.c0 = e.c0 AND e.c1 = f.c1 AND f.c0 = g.c0 AND g.c1 = h.c1 AND h.c0 = i.c0 AND i.c1 = j.c1 AND j.c0 = k.c0 AND k.c1 = l.c1 AND l.c0 = m.c0 AND m.c1 = n.c1;"),
                 nodes);
-        
-        System.out.println("Ordering Joins...");
-        
+                
         // Set the last boolean here to 'true' in order to have orderJoins()
         // print out its logic
         result = j.orderJoins(stats, filterSelectivities, false);
         
-        System.out.println("Ordered Joins!");
-
         // If you're only re-ordering the join nodes,
         // you shouldn't end up with more than you started with
         Assert.assertEquals(result.size(), nodes.size());
         
-        System.out.println("TABLE ALIAS: " + result.get(result.size() - 1).t2Alias);
         // Make sure that "bigTable" is the outermost table in the join
         Assert.assertEquals(result.get(result.size() - 1).t2Alias, "bigTable");
     }
