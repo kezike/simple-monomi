@@ -7,10 +7,10 @@ import java.util.Collections;
 /** Class for maintaining lock ownership information
 */
 public class LockManager {
-    public ConcurrentHashMap<PageId, TransactionId> xLocksPidToTid;
-    public ConcurrentHashMap<PageId, Set<TransactionId>> sLocksPidToTid;
-    public ConcurrentHashMap<TransactionId, Set<PageId>> xLocksTidToPid;
-    public ConcurrentHashMap<TransactionId, Set<PageId>> sLocksTidToPid;
+    private ConcurrentHashMap<PageId, TransactionId> xLocksPidToTid;
+    private ConcurrentHashMap<PageId, Set<TransactionId>> sLocksPidToTid;
+    private ConcurrentHashMap<TransactionId, Set<PageId>> xLocksTidToPid;
+    private ConcurrentHashMap<TransactionId, Set<PageId>> sLocksTidToPid;
 
     public LockManager() {
         this.xLocksPidToTid = new ConcurrentHashMap<PageId, TransactionId>();
@@ -19,10 +19,14 @@ public class LockManager {
         this.sLocksTidToPid = new ConcurrentHashMap<TransactionId, Set<PageId>>();
     }
 
-    public void acquireXLock(TransactionId tid, PageId pid) {
+    public boolean acquireXLock(TransactionId tid, PageId pid, long dlTimeOut) {
         TransactionId xTid;
         Set<TransactionId> sTids;
+        long start = System.currentTimeMillis();
         while (true) {
+          if (System.currentTimeMillis() - start > dlTimeOut) {
+            return false;
+          }
           synchronized (this) {
             boolean xLockIsFree = true;
             boolean sLockIsFree = true;
@@ -54,7 +58,7 @@ public class LockManager {
                 this.xLocksTidToPid.put(tid, xPids);
               }
               this.xLocksPidToTid.put(pid, tid);
-              break;
+              return true;
             }
           }
           /*try {
@@ -64,9 +68,13 @@ public class LockManager {
         }
     }
     
-    public void acquireSLock(TransactionId tid, PageId pid) {
+    public boolean acquireSLock(TransactionId tid, PageId pid, long dlTimeOut) {
         TransactionId xTid;
+        long start = System.currentTimeMillis();
         while (true) {
+          if (System.currentTimeMillis() - start > dlTimeOut) {
+            return false;
+          }
           synchronized (this) {
             boolean xLockIsFree = true;
             xTid = this.xLocksPidToTid.get(pid);
@@ -92,7 +100,7 @@ public class LockManager {
                 sTids.add(tid);
                 this.sLocksPidToTid.put(pid, sTids);
               }
-              break;
+              return true;
             }
           }
           /*try {

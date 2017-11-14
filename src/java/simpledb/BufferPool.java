@@ -32,6 +32,7 @@ public class BufferPool {
     private ConcurrentHashMap<PageId, Page> idToPage;
     private HashSet<PageId> pids;
     private LockManager lockManager;
+    private static final long DL_TIMEOUT = 50;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -79,9 +80,13 @@ public class BufferPool {
         throws TransactionAbortedException, DbException {
         // some code goes here
         if (perm.equals(Permissions.READ_WRITE)) {
-          this.lockManager.acquireXLock(tid, pid);
+          if (!this.lockManager.acquireXLock(tid, pid, DL_TIMEOUT)) {
+            throw new TransactionAbortedException();
+          }
         } else if (perm.equals(Permissions.READ_ONLY)) {
-          this.lockManager.acquireSLock(tid, pid);
+          if (!this.lockManager.acquireSLock(tid, pid, DL_TIMEOUT)) {
+            throw new TransactionAbortedException();
+          }
         }
         Catalog catalog = Database.getCatalog();
         Page page = this.idToPage.get(pid);
@@ -104,8 +109,8 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting write access
      * @param pid the ID of the page of interest
     */
-    public void acquireXLock(TransactionId tid, PageId pid) {
-        this.lockManager.acquireXLock(tid, pid);
+    public void acquireXLock(TransactionId tid, PageId pid, long dlTimeOut) {
+        this.lockManager.acquireXLock(tid, pid, dlTimeOut);
     }
 
     /**
@@ -114,8 +119,8 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting read access
      * @param pid the ID of the page of interest
     */
-    public void acquireSLock(TransactionId tid, PageId pid) {
-        this.lockManager.acquireSLock(tid, pid);
+    public void acquireSLock(TransactionId tid, PageId pid, long dlTimeOut) {
+        this.lockManager.acquireSLock(tid, pid, dlTimeOut);
     }
 
     /**

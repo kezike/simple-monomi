@@ -111,6 +111,52 @@ public class Tuple implements Serializable {
     }
 
     /**
+     * Compares the specified object with this Tuple for equality.
+     * 
+     * @param o
+     *            the Object to be compared for equality with this Tuple.
+     * @return true if the object is equal to this Tuple.
+     */
+    public boolean equals(Object o) {
+        // some code goes here
+        if (!(o instanceof Tuple)) {
+          return false;
+        }
+        Tuple t2 = (Tuple) o;
+        if (this.getTupleDesc().numFields() != t2.getTupleDesc().numFields()) {
+          return false;
+        }
+        for (int i = 0; i < this.getTupleDesc().numFields(); ++i) {
+          if (!(this.getTupleDesc().getFieldType(i).equals(t2.getTupleDesc().getFieldType(i)))) {
+            return false;
+          }
+          if (!(this.getField(i).equals(t2.getField(i)))) {
+            return false;
+          }
+        }
+        return true;
+    }
+
+    /**
+     * @return true iff the tuples have the same number of fields and
+     *   corresponding fields in the two Tuples are all equal.
+     */
+    public static boolean compareTuples(Tuple t1, Tuple t2) {
+        if (t1.getTupleDesc().numFields() != t2.getTupleDesc().numFields()) {
+          return false;
+        }
+        for (int i = 0; i < t1.getTupleDesc().numFields(); ++i) {
+          if (!(t1.getTupleDesc().getFieldType(i).equals(t2.getTupleDesc().getFieldType(i)))) {
+            return false;
+          }
+          if (!(t1.getField(i).equals(t2.getField(i)))) {
+            return false;
+          }
+        }
+        return true;
+    }
+
+    /**
      * Returns the contents of this Tuple as a string. Note that to pass the
      * system tests, the format needs to be as follows:
      *

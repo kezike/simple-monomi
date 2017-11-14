@@ -255,11 +255,14 @@ public class HeapPage implements Page {
         int i;
         for (i = 0; i < this.numSlots; i++) {
           if (this.tuples[i] == null) {
-        	  continue;
+            continue;
           }
-          if (TestUtil.compareTuples(this.tuples[i], t)) {
+          if (Tuple.compareTuples(this.tuples[i], t)) {
             break;
           }
+          /*if (this.tuples[i].equals(t)) {
+            break;
+          }*/
         }
         if (i == this.numSlots) {
           throw new DbException("Tuple " + t + " is not on this page");
