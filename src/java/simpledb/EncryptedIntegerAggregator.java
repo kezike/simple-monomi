@@ -1,6 +1,6 @@
 package simpledb;
 
-import java.util.*;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -10,88 +10,13 @@ public class EncryptedIntegerAggregator implements EncryptedAggregator {
 
     private static final long serialVersionUID = 1L;
 
-    private static Field NO_GROUPING_FIELD = new IntField(NO_GROUPING);
-    private ConcurrentHashMap<Field, Tuple> aggrByGroup;
-    private ConcurrentHashMap<Field, Integer> countByGroup;
-    private ConcurrentHashMap<Field, Integer> sumByGroup;
-    private int gbField;
-    private Type gbFieldType;
-    private int aField;
-    private EncOp oprtr;
-
-    private class IntegerAggregatorIterator implements OpIterator {
-        private ConcurrentHashMap<Field, Tuple> aggrByGroup;
-        private Enumeration<Field> intAggrIter;
-        private TupleDesc tupDesc;
-        private boolean isOpen;
-
-        public IntegerAggregatorIterator(ConcurrentHashMap<Field, Tuple> aggrByGroup) {
-            this.aggrByGroup = aggrByGroup;
-            this.intAggrIter = aggrByGroup.keys();
-            this.tupDesc = null;
-            this.isOpen = false;
-        }
-
-        /**
-         * Opens the iterator
-         * @throws DbException when there are problems opening/accessing the database.
-         */
-        public void open()
-            throws DbException, TransactionAbortedException {
-            this.isOpen = true;
-        }
-        
-        /** @return true if there are more tuples available, false if no more tuples or iterator isn't open. */
-        public boolean hasNext()
-            throws DbException, TransactionAbortedException {
-            if (!this.isOpen) {
-              return false;
-            }
-            return this.intAggrIter.hasMoreElements();
-        }
-
-        /**
-         * Gets the next tuple from the operator (typically implemented by reading
-         * from a child operator or an access method).
-         *
-         * @return The next tuple in the iterator.
-         * @throws NoSuchElementException if there are no more tuples
-         */
-        public Tuple next()
-            throws DbException, TransactionAbortedException, NoSuchElementException {
-            if (!this.hasNext()) {
-              throw new NoSuchElementException("No more tuples in this file");
-            }
-            Field nextField = this.intAggrIter.nextElement();
-            Tuple nextTuple = this.aggrByGroup.get(nextField);
-            this.tupDesc = nextTuple.getTupleDesc();
-            return nextTuple;
-        }
-
-        /**
-         * Resets the iterator to the start.
-         * @throws DbException When rewind is unsupported.
-         */
-        public void rewind() throws DbException, TransactionAbortedException {
-            this.intAggrIter = aggrByGroup.keys();
-        }
-
-        /**
-         * Returns the TupleDesc associated with this OpIterator.
-         * @return the TupleDesc associated with this OpIterator.
-         */
-        public TupleDesc getTupleDesc() {
-            return this.tupDesc;
-        }
-
-        /**
-         * Closes the iterator.
-         */
-        public void close() {
-            this.isOpen = false;
-        }
-    }
-
+    private final int gbfield;
+    private final Type gbfieldtype;
+    private final int afield;
+    private final EncOp op;
+    private final ArrayList<Tuple> results = new ArrayList<Tuple>();
+    private final ConcurrentHashMap<Field, Integer> gbValues = new ConcurrentHashMap<Field, Integer>();
+    private final ConcurrentHashMap<Field, Integer> avgCount = new ConcurrentHashMap<Field, Integer>();
     /**
      * Aggregate constructor
      * 
@@ -105,25 +30,18 @@ public class EncryptedIntegerAggregator implements EncryptedAggregator {
      *            the 0-based index of the aggregate field in the tuple
      * @param what
      *            the aggregation operator
+     *            
+     * TODO: The result returned from this will be an encrypted result, need to 
+     * then hand this to the client to decrypt with the appropriate KeyPair
      */
+
     public EncryptedIntegerAggregator(int gbfield, Type gbfieldtype, int afield, EncOp what) {
-        // some code goes here
-        this.aggrByGroup = new ConcurrentHashMap<Field, Tuple>();
-        this.countByGroup = new ConcurrentHashMap<Field, Integer>();
-        this.sumByGroup = new ConcurrentHashMap<Field, Integer>();
-        this.gbField = gbfield;
-        this.gbFieldType = gbfieldtype;
-        this.aField = afield;
-        this.oprtr = what;
+        this.gbfield = gbfield;
+        this.gbfieldtype = gbfieldtype;
+        this.afield = afield;
+        this.op = what;
     }
 
-    /**
-     * @return whether or not aggregator has grouping
-     */
-    public boolean hasGrouping() {
-        return this.gbField != NO_GROUPING;
-    }
-    
     /**
      * Merge a new tuple into the aggregate, grouping as indicated in the
      * constructor
@@ -132,82 +50,46 @@ public class EncryptedIntegerAggregator implements EncryptedAggregator {
      *            the Tuple containing an aggregate field and a group-by field
      */
     public void mergeTupleIntoGroup(Tuple tup) {
-        // some code goes here
-        TupleDesc tupDesc = tup.getTupleDesc();
-        Field tupGBField = tup.getField(this.gbField);
-        IntField tupAField = (IntField) tup.getField(this.aField);
-        Tuple tupAggr;
-        String tupAggrGBFieldName;
-        String tupAggrAFieldName;
-        Type[] tupAggrFieldTypes;
-        String[] tupAggrFieldNames;
-        TupleDesc tupAggrDesc;
-        Field tupAggrGBField;
-        IntField tupAggrAField;
-        Integer tupAggrCount;
-        Integer tupAggrSum;
-        int gbIdx = 0;
-        int aIdx;
-        if (this.hasGrouping()) {
-          tupAggrGBFieldName = tupDesc.getFieldName(this.gbField);
-          tupAggrAFieldName = tupDesc.getFieldName(this.aField);
-          tupAggrFieldTypes = new Type[]{this.gbFieldType, Type.INT_TYPE};
-          tupAggrFieldNames = new String[]{tupAggrGBFieldName, tupAggrAFieldName};
-          tupAggrDesc = new TupleDesc(tupAggrFieldTypes, tupAggrFieldNames);
-          tupAggrGBField = tup.getField(this.gbField);
-          aIdx = 1;
-        } else {
-          tupAggrAFieldName = tupDesc.getFieldName(this.aField);
-          tupAggrFieldTypes = new Type[]{Type.INT_TYPE};
-          tupAggrFieldNames = new String[]{tupAggrAFieldName};
-          tupAggrDesc = new TupleDesc(tupAggrFieldTypes, tupAggrFieldNames);
-          tupAggrGBField = NO_GROUPING_FIELD;
-          aIdx = 0;
-        }
-        tupAggr = this.aggrByGroup.get(tupAggrGBField);
-        tupAggrCount = this.countByGroup.get(tupAggrGBField);
-        tupAggrSum = this.sumByGroup.get(tupAggrGBField);
-        int tupAFieldVal = tupAField.getValue();
-        if (tupAggr == null) {
-          tupAggr = new Tuple(tupAggrDesc);
-          if (this.hasGrouping()) {
-            tupAggr.setField(gbIdx, tupAggrGBField);
-          }
-          if (this.oprtr == EncOp.COUNT) {
-            tupAggr.setField(aIdx, new IntField(1));
-          } else {
-            tupAggr.setField(aIdx, new IntField(tupAFieldVal));;
-          }
-          tupAggrCount = 0;
-          tupAggrSum = 0;
-        } else {
-          tupAggrAField = (IntField) tupAggr.getField(aIdx);
-          int tupAggrAFieldVal = tupAggrAField.getValue();
-          switch (this.oprtr) {
-            case OPE_MIN:
-              if (tupAFieldVal < tupAggrAFieldVal) {
-                tupAggr.setField(aIdx, new IntField(tupAFieldVal));
-              }
-              break;
-            case OPE_MAX:
-              if (tupAFieldVal > tupAggrAFieldVal) {
-                tupAggr.setField(aIdx, new IntField(tupAFieldVal));
-              }
-              break;
+        // This field could be either a StringField or an IntField
+        Field gbField = gbfield != Aggregator.NO_GROUPING ? 
+                tup.getField(gbfield) : // IntField
+                new IntField(gbfield);  // -1
+                
+        Integer aggVal = Integer.valueOf(((IntField) tup.getField(afield)).getValue());
+        
+        if (!gbValues.containsKey(gbField)) {
+            gbValues.put(gbField, op.equals(Op.COUNT) ? 1 : aggVal);
+            avgCount.putIfAbsent(gbField, Integer.valueOf(1));
+        } else {            
+            Integer prevVal = gbValues.get(gbField);
+            
+            switch (this.op) {    
             case PAILLIER_SUM:
-              tupAggr.setField(aIdx, new IntField(tupAggrAFieldVal + tupAFieldVal));
-              break;
+                // TODO: Replace with actual implementation of Paillier sum
+                gbValues.put(gbField, (prevVal + aggVal));
+                break;
             case PAILLIER_AVG:
-              tupAggr.setField(aIdx, new IntField((tupAggrSum + tupAFieldVal) / (tupAggrCount + 1)));
-              break;
+                // TODO: Replace with Paillier implementation
+                Integer num = prevVal + aggVal;
+                gbValues.put(gbField, num);
+                avgCount.put(gbField, avgCount.get(gbField) +1);
+                break;
+            case OPE_MIN:
+                // TODO: Replace with OPE implementation
+                gbValues.put(gbField, prevVal < aggVal ? prevVal : aggVal);
+                break;
+            case OPE_MAX:
+                // TODO: Replace with OPE implementation
+                gbValues.put(gbField, prevVal < aggVal ? aggVal : prevVal);
+                break;
             case COUNT:
-              tupAggr.setField(aIdx, new IntField(tupAggrAFieldVal + 1));
-              break;
-          }
+                gbValues.put(gbField, prevVal + 1);
+            case SUM_COUNT:
+            case SC_AVG:
+                //throw new NoSuchElementException("This will be implemented in lab7");
+            }
         }
-        this.aggrByGroup.put(tupAggrGBField, tupAggr);
-        this.countByGroup.put(tupAggrGBField, tupAggrCount + 1);
-        this.sumByGroup.put(tupAggrGBField, tupAggrSum + tupAFieldVal);
+        
     }
 
     /**
@@ -219,7 +101,34 @@ public class EncryptedIntegerAggregator implements EncryptedAggregator {
      *         the constructor.
      */
     public OpIterator iterator() {
-        // some code goes here
-        return new IntegerAggregatorIterator(new ConcurrentHashMap<Field, Tuple>(this.aggrByGroup));
+        if (gbfield == Aggregator.NO_GROUPING) {
+            // No group case, return single value
+            TupleDesc td = new TupleDesc(new Type[]{Type.INT_TYPE});
+            Tuple t = new Tuple(td);
+            Field gb = new IntField(gbfield);
+            Integer value = gbValues.get(new IntField(gbfield));
+
+            // TODO: Make sure this still works with Paillier
+            if (op.equals(Op.AVG)) value /= avgCount.get(gb); // late average
+            t.setField(0, new IntField(value));
+            results.add(t);
+            return new TupleIterator(td, results);
+        } else {
+            // Regular case, return (groupVal, aggVal) pairs
+            TupleDesc td = new TupleDesc(new Type[]{gbfieldtype, Type.INT_TYPE});
+            for (Field gb : gbValues.keySet()) {
+                Tuple t = new Tuple(td);
+                Integer value = gbValues.get(gb);
+
+                // TODO: Make sure this still works with Paillier
+                if (op.equals(Op.AVG)) value /= avgCount.get(gb); // late average
+                t.setField(0, gb);
+                t.setField(1, new IntField(value));                    
+                results.add(t);
+            }
+            return new TupleIterator(td, results);
+        }
+        
     }
+
 }
