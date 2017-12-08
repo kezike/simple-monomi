@@ -135,13 +135,13 @@ public class HeapFile implements DbFile {
         // that has twice the number of columns
         
         // Create a new TupleDescriptor that includes the new columns
-        Type[] newTypes = new Type[this.tupDesc.numFields()*NUM_ENCRYPTIONS];
-        String[] newNames = new String[this.tupDesc.numFields()*NUM_ENCRYPTIONS];
+        Type[] newTypes = new Type[tupDesc.numFields()*NUM_ENCRYPTIONS];
+        String[] newNames = new String[tupDesc.numFields()*NUM_ENCRYPTIONS];
         int i = 0;
         for (TDItem td : tupDesc.getItems()) {
             for (int j=0; j < NUM_ENCRYPTIONS; j++) {
                 newTypes[i] = td.getFieldType();
-                newNames[i] = ENCRYPTION_PREFIXES[j] + td.getFieldName();
+                newNames[i] = ENCRYPTION_PREFIXES[j] + td.getFieldName(); // TODO: Check for NPE
                 i++;
             }
         }
@@ -177,7 +177,10 @@ public class HeapFile implements DbFile {
         while (hfi.hasNext()) {
             Tuple t = hfi.next();
             Tuple encTuple = new Tuple(newTD);
+            
             // TODO: APPLY ENCRYPTIONS HERE
+            // TODO: These encryptions probably require us to keep track of private 
+            // decryption keys, decide where we're storing those and how we're using them
             // Paillier Encryption of tuple field
             // OPE of tuple field
             
