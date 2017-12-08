@@ -15,6 +15,12 @@ import java.util.*;
  */
 public class HeapFile implements DbFile {
 
+    // Prefixes for the column names that will be given to the new TupleDesc
+    private static final String[] ENCRYPTION_PREFIXES = new String[]{"PAILLIER_", "OPE_"};
+    // Determines how many new columns the EncryptedFile will have per original column
+    private static final int NUM_ENCRYPTIONS = ENCRYPTION_PREFIXES.length;
+    // Suffix added to the end of the HeapFile's name when encrypted
+    private static final String ENCRYPTION_SUFFIX = "_encrypted";
     private File file;
     private TupleDesc tupDesc;
 
@@ -113,6 +119,71 @@ public class HeapFile implements DbFile {
         // some code goes here
         this.file = f;
         this.tupDesc = td;
+    }
+    
+    /**
+     * Takes the contents of this file and applies Paillier and Order-Preserving
+     * Encryption to all the fields. The resulting EncryptedFile will have two columns for
+     * each column in the original file, one for the Paillier Encryption and one for the
+     * Order-Preserving Encryption.
+     * @return An EncryptedFile that contains the encrypted contents of this HeapFile
+     */
+    public EncryptedFile encrypt() throws IOException, DbException, 
+                                          TransactionAbortedException {
+        // TODO: Apply the relevant encryption schemes to each tuple in each page
+        // essentially iterate through all the tuples and create a new encrypted table
+        // that has twice the number of columns
+        
+        // Create a new TupleDescriptor that includes the new columns
+        Type[] newTypes = new Type[this.tupDesc.numFields()*NUM_ENCRYPTIONS];
+        String[] newNames = new String[this.tupDesc.numFields()*NUM_ENCRYPTIONS];
+        int i = 0;
+        for (TDItem td : tupDesc.getItems()) {
+            for (int j=0; j < NUM_ENCRYPTIONS; j++) {
+                newTypes[i] = td.getFieldType();
+                newNames[i] = ENCRYPTION_PREFIXES[j] + td.getFieldName();
+                i++;
+            }
+        }
+        TupleDesc newTD = new TupleDesc(newTypes, newNames);
+
+        // Create a new file that we're going to write to
+        File newF = new File(this.file.getAbsolutePath() + ENCRYPTION_SUFFIX);
+
+        // touch the file
+        FileOutputStream fos = new FileOutputStream(newF);
+        fos.write(new byte[0]);
+        fos.close();
+
+        EncryptedFile encF = new EncryptedFile(newF, newTD);
+        Database.getCatalog().addTable(encF, UUID.randomUUID().toString());
+        
+        // write an empty page to the new file
+        HeapPageId pid = new HeapPageId(encF.getId(), 0);
+        HeapPage page = null;
+        try {
+            page = new HeapPage(pid, HeapPage.createEmptyPageData());
+        } catch (IOException e) {
+            // this should never happen for an empty page; bail;
+            throw new RuntimeException("failed to create empty page in HeapFile");
+        }
+        
+        encF.writePage(page);
+        // Now that we have the new file to write to, iterate through each tuple in
+        // the original heap file, apply the encryptions, and write to encFile
+        HeapFileIterator hfi = (HeapFileIterator) this.iterator(null);
+        hfi.open();
+    
+        while (hfi.hasNext()) {
+            Tuple t = hfi.next();
+            Tuple encTuple = new Tuple(newTD);
+            // TODO: APPLY ENCRYPTIONS HERE
+            // Paillier Encryption of tuple field
+            // OPE of tuple field
+            
+            encF.insertTuple(null, encTuple);
+        }
+        return encF;
     }
 
     /**
