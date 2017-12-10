@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.util.*;
 
 /**
@@ -174,9 +175,29 @@ public class HeapFile implements DbFile {
         HeapFileIterator hfi = (HeapFileIterator) this.iterator(null);
         hfi.open();
     
+        // TODO: PUT encryption keys somehwere
+        KeyPair keyPair;
+        PublicKey publicKey;
+        KeyPairBuilder keygen = new KeyPairBuilder();
+        keyPair = keygen.generateKeyPair();
+        publicKey = keyPair.getPublicKey();
+        
         while (hfi.hasNext()) {
             Tuple t = hfi.next();
             Tuple encTuple = new Tuple(newTD);
+            
+            for(int j=0; j < newTD.numFields(); j++) {
+            		Integer fieldValue = ((IntField) encTuple.getField(j)).getValue();
+            		BigInteger plainData = BigInteger.valueOf((long) fieldValue);
+            		BigInteger encryptedData = publicKey.encrypt(plainData);
+            		int encryptedD;
+            		IntField encryptedField = new IntField(j); // TODO: Change!
+            		
+            		// TODO: Check if BigInteger -> Integer is actually fine
+//            		encTuple.setField(j, );
+            }
+            
+
             
             // TODO: APPLY ENCRYPTIONS HERE
             // TODO: These encryptions probably require us to keep track of private 
