@@ -176,9 +176,12 @@ public class HeapFile implements DbFile {
         hfi.open();
     
         // TODO: PUT encryption keys somehwere
+        final int BITS_INTEGER = 15;
         KeyPair keyPair;
         PublicKey publicKey;
         KeyPairBuilder keygen = new KeyPairBuilder();
+        keygen.upperBound(BigInteger.valueOf(Integer.MAX_VALUE));
+        keygen.bits(BITS_INTEGER);
         keyPair = keygen.generateKeyPair();
         publicKey = keyPair.getPublicKey();
         
@@ -186,19 +189,15 @@ public class HeapFile implements DbFile {
             Tuple t = hfi.next();
             Tuple encTuple = new Tuple(newTD);
             
+            // Paillier Encryption
             for(int j=0; j < newTD.numFields(); j++) {
             		Integer fieldValue = ((IntField) encTuple.getField(j)).getValue();
             		BigInteger plainData = BigInteger.valueOf((long) fieldValue);
             		BigInteger encryptedData = publicKey.encrypt(plainData);
-            		int encryptedD;
-            		IntField encryptedField = new IntField(j); // TODO: Change!
-            		
-            		// TODO: Check if BigInteger -> Integer is actually fine
-//            		encTuple.setField(j, );
+            		IntField encryptedField = new IntField(encryptedData.intValueExact()); // TODO: Change!
+            		encTuple.setField(j, encryptedField);
             }
-            
 
-            
             // TODO: APPLY ENCRYPTIONS HERE
             // TODO: These encryptions probably require us to keep track of private 
             // decryption keys, decide where we're storing those and how we're using them

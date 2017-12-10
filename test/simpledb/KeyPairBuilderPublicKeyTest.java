@@ -26,7 +26,7 @@ public class KeyPairBuilderPublicKeyTest {
     public void testBitsSetup() {
         assertEquals(BITS, publicKey.getBits());
     }
-
+    
     @Test
     public void testCalculationOfNSquared() {
 
