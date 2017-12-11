@@ -13,7 +13,7 @@ import org.junit.Test;
 public class KeyPairIntegerTest {
 
     final int BITS = 1024;
-    final int BITS_INTEGER = 15;
+    final int BITS_INTEGER = 33;
 
     private KeyPairBuilder keygen;
     private KeyPair keypair;
@@ -23,6 +23,7 @@ public class KeyPairIntegerTest {
     public void init() {
         this.keygen = new KeyPairBuilder();
         keygen.upperBound(BigInteger.valueOf(Integer.MAX_VALUE));
+//        keygen.upperBound(BigInteger.valueOf(1000000));
         keygen.bits(BITS_INTEGER);
         this.keypair = keygen.generateKeyPair();
         this.publicKey = keypair.getPublicKey();
@@ -62,20 +63,23 @@ public class KeyPairIntegerTest {
     public void testBigIntegerToIntegerOverFlow() {
     		
     		int i = 0; 
-    		while (i < 10000) { // Test 10,000 times if the the key works
+    		while (i < 10) { // Test 10,000 times if the the key works
         		Random r = new Random();
         		BigInteger plainData = BigInteger.valueOf(r.nextInt());
         		System.out.println("Plain Data: " + plainData);
         		BigInteger encryptedData = publicKey.encrypt(plainData);
         		System.out.println("Encrypted Data: " + encryptedData);
         		assertFalse(plainData.equals(encryptedData));
-                
-        		try {
+        		BigInteger decryptedData = keypair.decrypt(encryptedData);
+                System.out.println("Decrypted Data: "  + decryptedData);
+                assertEquals(plainData, decryptedData);
+        		
+                /*try {
         			encryptedData.intValueExact();
         		} catch (ArithmeticException e) {
         			System.out.println("Iteration: " + i);
         			fail("Encrypted Data is too large for an integer.");
-        		}	
+        		}	*/
     			i++;
     		}
     }

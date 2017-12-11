@@ -167,11 +167,12 @@ public class HeapFile implements DbFile {
         }
         // Add one more column that has the public key values for paillier encryption
         // First extra column is N, second extra column is G
-        int nColumn = totalNumFields - 1;
+        int nColumn = totalNumFields - 2;
+        int gColumn = totalNumFields - 1; // last column
         newTypes[nColumn] = Type.INT_TYPE;
         newNames[nColumn] = PAILLIER_MODULUS;
-        newTypes[totalNumFields] = Type.INT_TYPE;
-        newNames[totalNumFields] = PAILLIER_G;
+        newTypes[gColumn] = Type.INT_TYPE;
+        newNames[gColumn] = PAILLIER_G;
         
         TupleDesc newTD = new TupleDesc(newTypes, newNames);
 
@@ -214,6 +215,9 @@ public class HeapFile implements DbFile {
         
         // TODO: This line is for testing only
         this.privateKey = keyPair.getPrivateKey();
+        System.out.println("Public key: " + publicKey.toString());
+        System.out.println("Private key: " + privateKey.toString());
+        
         
         // TODO: Come up with convention for saving all the different private keys. Do we
         // want a file for each key, or one file with all the keys for the file
@@ -231,21 +235,25 @@ public class HeapFile implements DbFile {
                 BigInteger encryptedData = publicKey.encrypt(plainData);
                 IntField encryptedField = new IntField(encryptedData.intValueExact()); // TODO: Change
                 encTuple.setField(j, encryptedField);
+                System.out.println("Encrypted " + plainData + " to " + encryptedData);
             }
 
             for (int j = originalNumFields; j < originalNumFields*2; j++) {
-                // TODO: OPE of tuple field                
+                // TODO: OPE of tuple field   
+                // For now, to test, just store the unencrypted values
+                encTuple.setField(j, originalTuple.getField(j-originalNumFields));
             }
             
             // Save public key values
             IntField N = new IntField(publicKey.getN().intValueExact());
             encTuple.setField(nColumn, N);
             IntField G = new IntField(publicKey.getG().intValueExact());
-            encTuple.setField(totalNumFields, G);
+            encTuple.setField(gColumn, G);
             
             // write tuple to file
             encF.insertTuple(null, encTuple);
         }
+        
         return encF;
     }
 
