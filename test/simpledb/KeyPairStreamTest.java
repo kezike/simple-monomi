@@ -56,6 +56,8 @@ public class KeyPairStreamTest {
 	        ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream("object.data"));
 	        KeyPair keyPairFromFile = (KeyPair) objectInputStream.readObject();
 	        objectInputStream.close();
+	        System.out.println("Expected: " + keyPair.getPublicKey().toString());
+	        System.out.println("Actual: " + keyPairFromFile.getPublicKey().toString());
 	        assertTrue(keyPairFromFile.getPublicKey().equals(publicKey));
 		} catch (Exception e) {
 			e.printStackTrace();

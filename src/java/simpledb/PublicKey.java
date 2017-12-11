@@ -75,7 +75,7 @@ public class PublicKey implements Serializable {
     }
     
     public String toString() {
-    return this.getBits() + " " + this.getN() + " " + this.getG() + " " + this.getnSquared();
+    return "Bits: " + getBits() + " N: " + getN() + " G: " + getG() + " N^2: " + getnSquared();
 }
     
 }
