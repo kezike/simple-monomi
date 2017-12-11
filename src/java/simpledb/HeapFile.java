@@ -217,7 +217,7 @@ public class HeapFile implements DbFile {
         
         // TODO: Come up with convention for saving all the different private keys. Do we
         // want a file for each key, or one file with all the keys for the file
-        savePrivateKey(keyPair.getPrivateKey(), String.valueOf(getId()) + ".paillier");
+        saveKeyPair(keyPair, String.valueOf(getId()) + ".paillier");
         
         while (hfi.hasNext()) {
             Tuple originalTuple = hfi.next();
@@ -231,7 +231,7 @@ public class HeapFile implements DbFile {
                 BigInteger encryptedData = publicKey.encrypt(plainData);
                 IntField encryptedField = new IntField(encryptedData.intValueExact()); // TODO: Change
                 encTuple.setField(j, encryptedField);
-            }            
+            }
 
             for (int j = originalNumFields; j < originalNumFields*2; j++) {
                 // TODO: OPE of tuple field                
@@ -254,11 +254,11 @@ public class HeapFile implements DbFile {
      * @param privateKey the PrivateKey that was used to encrypt this file
      * @param the name of the file to save the private key to
      */
-    public static void savePrivateKey(PrivateKey privateKey, String filename) {
+    public static void saveKeyPair(KeyPair keypair, String filename) {
         try {
             ObjectOutputStream objectOutputStream = 
                     new ObjectOutputStream(new FileOutputStream(filename));
-            objectOutputStream.writeObject(privateKey);
+            objectOutputStream.writeObject(keypair);
             objectOutputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
