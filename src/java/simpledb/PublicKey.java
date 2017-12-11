@@ -1,5 +1,6 @@
 package simpledb;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Random;
 
@@ -14,7 +15,7 @@ import java.util.Random;
  * Borrowed from https://github.com/kunerd/jpaillier
  * @see KeyPair
  */
-public class PublicKey {
+public class PublicKey implements Serializable {
     private final int bits;
     private final BigInteger n;
     private final BigInteger nSquared;
@@ -64,4 +65,17 @@ public class PublicKey {
 
         return result;
     }
+    
+    public boolean equals(Object p) {
+    		PublicKey publicKey = (PublicKey) p;
+        return (this.getBits() == publicKey.getBits()) &&
+        		(this.getN().compareTo(publicKey.getN()) == 0) &&
+        		(this.getG().compareTo(publicKey.getG()) == 0) &&
+        		(this.getnSquared().compareTo(publicKey.getnSquared()) == 0);
+    }
+    
+    public String toString() {
+    return this.getBits() + " " + this.getN() + " " + this.getG() + " " + this.getnSquared();
+}
+    
 }
