@@ -26,4 +26,8 @@ class PrivateKey implements Serializable {
     public BigInteger getPreCalculatedDenominator() {
         return preCalculatedDenominator;
     }
+    
+    public String toString() {
+        return "Lambda: " + getLambda() + " PreCalculatedDenominator: " + getPreCalculatedDenominator();
+    }
 }

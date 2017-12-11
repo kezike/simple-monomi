@@ -3,6 +3,9 @@ package simpledb;
 import simpledb.systemtest.SimpleDbTestBase;
 import simpledb.systemtest.SystemTestUtil;
 
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
+import java.math.BigInteger;
 import java.util.*;
 import org.junit.After;
 import org.junit.Before;
@@ -121,6 +124,78 @@ public class HeapFileReadTest extends SimpleDbTestBase {
         it.close();
     }
 
+    @Test
+    public void encrypt() throws Exception {
+        HeapFile smallFile = SystemTestUtil.createRandomHeapFile(2, 3, null,
+                null);
+        EncryptedFile encF = smallFile.encrypt();
+
+        // Private key should be encrypted somewhere, should get it
+        
+        
+        DbFileIterator it = smallFile.iterator(tid);
+        // Not open yet
+        assertFalse(it.hasNext());
+        try {
+            it.next();
+            fail("expected exception");
+        } catch (NoSuchElementException e) {
+        }
+
+        KeyPair keyPairFromFile;
+        try {
+            String filename = String.valueOf(smallFile.getId()) + ".paillier";
+            ObjectInputStream objectInputStream = 
+                    new ObjectInputStream(new FileInputStream(filename));
+            keyPairFromFile = (KeyPair) objectInputStream.readObject();
+            objectInputStream.close();
+            
+            DbFileIterator encIt = encF.iterator(tid);
+
+            it.open();
+            encIt.open();
+            
+            int count = 0;
+            System.out.println("Iterating through small file");
+            while (it.hasNext() && encIt.hasNext()) {
+                Tuple tup = it.next();
+                Tuple encTup = encIt.next();
+                assertNotNull(tup);
+                assertNotNull(encTup);
+                count += 1;
+                System.out.println("\nOriginal tuple: " + tup);
+                System.out.println("Encrypted: " + encTup);
+                assertFalse(tup.equals(encTup));
+                
+                System.out.println("New pub: " + keyPairFromFile.getPublicKey().toString());
+                System.out.println("New priv: " + keyPairFromFile.getPrivateKey().toString());
+                
+                // now decrypt the first 2 columns which should be Paillier
+                int firstEncVal = ((IntField) encTup.getField(0)).getValue();
+                BigInteger firstEncNum = BigInteger.valueOf(firstEncVal);
+                BigInteger decrypted = keyPairFromFile.decrypt(firstEncNum);
+                int firstOrigVal = ((IntField) tup.getField(0)).getValue();
+                System.out.println("Expected: " + firstOrigVal + " Actual: " + decrypted.toString());
+                assertEquals(BigInteger.valueOf(firstOrigVal), decrypted);
+                
+                int secondEncVal = ((IntField) encTup.getField(1)).getValue();
+                BigInteger secondNum = BigInteger.valueOf(secondEncVal);
+                decrypted = keyPairFromFile.decrypt(secondNum);
+//                System.out.println("Expected: " + secondNum + " Actual: " + decrypted.toString());
+//                assertEquals(BigInteger.valueOf(secondEncVal), decrypted);
+                                
+            }
+            assertEquals(3, count);
+            it.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Reading of public key failed.");
+        }        
+        
+    }
+
+    
     /**
      * JUnit suite target
      */

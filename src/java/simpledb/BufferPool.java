@@ -80,13 +80,13 @@ public class BufferPool {
         throws TransactionAbortedException, DbException {
         // some code goes here
         if (perm.equals(Permissions.READ_WRITE)) {
-          if (!this.lockManager.acquireXLock(tid, pid, DL_TIMEOUT)) {
-            throw new TransactionAbortedException();
-          }
+//          if (!this.lockManager.acquireXLock(tid, pid, DL_TIMEOUT)) {
+//            throw new TransactionAbortedException();
+//          }
         } else if (perm.equals(Permissions.READ_ONLY)) {
-          if (!this.lockManager.acquireSLock(tid, pid, DL_TIMEOUT)) {
-            throw new TransactionAbortedException();
-          }
+//          if (!this.lockManager.acquireSLock(tid, pid, DL_TIMEOUT)) {
+//            throw new TransactionAbortedException();
+//          }
         }
         Catalog catalog = Database.getCatalog();
         Page page = this.idToPage.get(pid);

@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import java.math.BigInteger;
+import java.security.SecureRandom;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -22,7 +23,8 @@ public class JPaillierTest {
 
     @Test
     public void testEncryption() {
-        BigInteger plainData = BigInteger.valueOf(10);
+        SecureRandom rng = new SecureRandom();
+        BigInteger plainData = BigInteger.probablePrime(15, rng);
         System.out.println("Plain Data: " + plainData);
 
         BigInteger encryptedData = publicKey.encrypt(plainData);
@@ -32,7 +34,8 @@ public class JPaillierTest {
 
     @Test
     public void testDecyption() {
-        BigInteger plainData = BigInteger.valueOf(10);
+        SecureRandom rng = new SecureRandom();
+        BigInteger plainData = BigInteger.probablePrime(15, rng);
 
         BigInteger encryptedData = publicKey.encrypt(plainData);
         BigInteger decryptedData = keyPair.decrypt(encryptedData);

@@ -46,7 +46,9 @@ public class KeyPair implements Serializable {
         BigInteger p = c.modPow(lambda, nSquare).subtract(BigInteger.ONE).divide(n).multiply(u).mod(n);
 
         if (upperBound != null && p.compareTo(upperBound) > 0) {
+            System.out.println("Subtracting: " + n + " from " + p + " upper " + upperBound);
             p = p.subtract(n);
+            System.out.println("Final P: " + p + "\n");
         }
 
         return p;
