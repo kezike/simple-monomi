@@ -137,8 +137,8 @@ public class OPE {
       int mid_idx = start_idx + (end_idx - start_idx) / 2;
       Integer mid_val = values.get(mid_idx);
       OPE_Node node = new OPE_Node(mid_val);
-      OPE_Node less = this.build_ope_tree(values, start_idx, mid_idx - 1);
-      OPE_Node more = this.build_ope_tree(values, mid_idx + 1, end_idx);
+      OPE_Node less = this.buildOPETree(values, start_idx, mid_idx - 1);
+      OPE_Node more = this.buildOPETree(values, mid_idx + 1, end_idx);
       node.set_less(less);
       node.set_more(more);
       return node;
@@ -148,7 +148,7 @@ public class OPE {
       ArrayList<Integer> values = this.sort(file, col);
       int start_idx = 0;
       int end_idx = values.size() - 1;
-      OPE_Node root = this.build_ope_tree(values, start_idx, end_idx);
+      OPE_Node root = this.buildOPETree(values, start_idx, end_idx);
       return root;
   }
 }
