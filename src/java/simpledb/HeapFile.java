@@ -29,7 +29,7 @@ public class HeapFile implements DbFile {
     // Name of the column with Paillier G
     public static final String PAILLIER_G = ENCRYPTION_PREFIXES[0] + "G";
     // Bits integer used in creating keys. Should be the same for all files we encrypt
-    public static final int BITS_INTEGER = 15;
+    public static final int BITS_INTEGER = Type.BIGINT_LEN;
     // Number of extra columns beyond encrypted columns needed to recreate keys
     // First one is for N, second one is for G
     public static final int NUM_EXTRA_COLUMNS = 2;

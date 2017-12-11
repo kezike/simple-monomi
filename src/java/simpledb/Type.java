@@ -2,6 +2,7 @@ package simpledb;
 
 import java.text.ParseException;
 import java.io.*;
+import java.math.BigInteger;
 
 /**
  * Class representing a type in SimpleDB.
@@ -42,9 +43,30 @@ public enum Type implements Serializable {
                 throw new ParseException("couldn't parse", 0);
             }
         }
+    }, BIGINT_TYPE() {
+        @Override
+        public int getLen() {
+            return BIGINT_LEN+4;
+        }
+        
+        @Override
+        public Field parse(DataInputStream dis) throws ParseException {
+            try {
+                int biglen = dis.readInt();
+                byte bs[] = new byte[biglen];
+                dis.read(bs);
+                dis.skipBytes(BIGINT_LEN-biglen);
+                BigInteger bi = new BigInteger(bs);
+                return new BigIntField(bi);
+            } catch (IOException e) {
+                throw new ParseException("Couldn't parse", 0);
+            }
+        }
     };
     
     public static final int STRING_LEN = 128;
+    // needed an arbitrary value higher than 33, choosing 40 because divisible by 8
+    public static final int BIGINT_LEN = 40; 
 
   /**
    * @return the number of bytes required to store a field of this type.
