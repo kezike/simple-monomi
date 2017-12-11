@@ -37,9 +37,16 @@ public class BigIntField implements Field {
         return ((BigIntField) field).value == value;
     }
 
+    /**
+     * Write this BigInt to dos. First writes the number of bytes need to represent this
+     * BigInt.
+     */
     public void serialize(DataOutputStream dos) throws IOException {
 //        dos.writeObject(value);
+        BigInteger b = value;
+        dos.writeInt(b.bitLength());
         dos.write(value.toByteArray());
+        
     }
 
     /**

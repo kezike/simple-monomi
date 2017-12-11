@@ -189,6 +189,8 @@ public class Catalog {
                         types.add(Type.INT_TYPE);
                     else if (els2[1].trim().toLowerCase().equals("string"))
                         types.add(Type.STRING_TYPE);
+                    else if (els2[1].trim().toLowerCase().equals("bigint"))
+                        types.add(Type.BIGINT_TYPE);
                     else {
                         System.out.println("Unknown type " + els2[1]);
                         System.exit(0);
