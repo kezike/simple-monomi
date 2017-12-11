@@ -4,7 +4,9 @@ import java.io.*;
 import java.util.*;
 
 /**
- * EncryptedFile is an implementation ...
+ * EncryptedFile is an encrypted version of a HeapFile using Paillier encryption 
+ * and OPE to encrypt its columns. The last column of the table is the public key for the
+ * Paillier encryption (the modulus n)
  * 
  * @see simpledb.HeapPage#HeapPage
  * @author Akengin, Mehmet Efe; Ezike, Kayode; Henriquez, Carlos. 
@@ -259,6 +261,7 @@ public class EncryptedFile implements DbFile {
      * @return the tuples in this file
      */
     public List<Tuple> getValidTuples(TransactionId tid) {
+        // Iterator should return the encrypted tuples that can be decrypted with the right keys
         ArrayList<Tuple> newTuples = new ArrayList<Tuple>();
         for (int i = 0; i < this.numPages(); i++) {
           PageId pid = new HeapPageId(this.getId(), i);

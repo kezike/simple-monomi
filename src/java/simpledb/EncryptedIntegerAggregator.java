@@ -1,5 +1,6 @@
 package simpledb;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,8 +16,19 @@ public class EncryptedIntegerAggregator implements EncryptedAggregator {
     private final int afield;
     private final EncOp op;
     private final ArrayList<Tuple> results = new ArrayList<Tuple>();
-    private final ConcurrentHashMap<Field, Integer> gbValues = new ConcurrentHashMap<Field, Integer>();
-    private final ConcurrentHashMap<Field, Integer> avgCount = new ConcurrentHashMap<Field, Integer>();
+    private final ConcurrentHashMap<Field, BigInteger> gbValues = 
+            new ConcurrentHashMap<Field, BigInteger>();
+    private final ConcurrentHashMap<Field, BigInteger> avgCount = 
+            new ConcurrentHashMap<Field, BigInteger>();
+    private TupleDesc td;
+    // Encrypted columns show have names corresponding to these
+    private int modIndex;
+    private int gIndex;
+    private int N;
+    private int N2;
+    private int G;
+    PublicKey publicKey;
+    
     /**
      * Aggregate constructor
      * 
@@ -41,13 +53,26 @@ public class EncryptedIntegerAggregator implements EncryptedAggregator {
         this.afield = afield;
         this.op = what;
     }
+    
+    private void initializePublicKey(Tuple t) {
+        TupleDesc td = t.getTupleDesc();
+        this.modIndex = td.fieldNameToIndex(HeapFile.PAILLIER_MODULUS);
+        this.gIndex = td.fieldNameToIndex(HeapFile.PAILLIER_G);
+        
+        this.N = ((IntField) t.getField(modIndex)).getValue();
+        this.N2 = N*N;
+        this.G = ((IntField) t.getField(gIndex)).getValue();
+        this.publicKey = 
+                new PublicKey(BigInteger.valueOf(N), BigInteger.valueOf(N2), 
+                              BigInteger.valueOf(G), HeapFile.BITS_INTEGER);
+    }
 
     /**
      * Merge a new tuple into the aggregate, grouping as indicated in the
      * constructor
      * 
      * @param tup
-     *            the Tuple containing an aggregate field and a group-by field
+     *            the encrypted Tuple containing an aggregate field and a group-by field
      */
     public void mergeTupleIntoGroup(Tuple tup) {
         // This field could be either a StringField or an IntField
@@ -55,35 +80,46 @@ public class EncryptedIntegerAggregator implements EncryptedAggregator {
                 tup.getField(gbfield) : // IntField
                 new IntField(gbfield);  // -1
                 
-        Integer aggVal = Integer.valueOf(((IntField) tup.getField(afield)).getValue());
+        BigInteger aggVal = BigInteger.valueOf(((IntField) tup.getField(afield)).getValue());
         
         if (!gbValues.containsKey(gbField)) {
-            gbValues.put(gbField, op.equals(Op.COUNT) ? 1 : aggVal);
-            avgCount.putIfAbsent(gbField, Integer.valueOf(1));
+            gbValues.put(gbField, op.equals(Op.COUNT) ? BigInteger.valueOf(1) : aggVal);
+            avgCount.putIfAbsent(gbField, BigInteger.valueOf(1));
         } else {            
-            Integer prevVal = gbValues.get(gbField);
+            BigInteger prevVal = gbValues.get(gbField);
             
             switch (this.op) {    
             case PAILLIER_SUM:
                 // TODO: Replace with actual implementation of Paillier sum
-                gbValues.put(gbField, (prevVal + aggVal));
+                td = tup.getTupleDesc();
+                if (publicKey == null) {
+                    initializePublicKey(tup);
+                }
+                // Encrypted columns show have names corresponding to these
+                gbValues.put(gbField, Paillier.add(prevVal, aggVal, publicKey));
                 break;
             case PAILLIER_AVG:
                 // TODO: Replace with Paillier implementation
-                Integer num = prevVal + aggVal;
-                gbValues.put(gbField, num);
-                avgCount.put(gbField, avgCount.get(gbField) +1);
+                td = tup.getTupleDesc();
+                if (publicKey == null) {
+                    initializePublicKey(tup);
+                }
+                gbValues.put(gbField, Paillier.add(prevVal, aggVal, publicKey));
+                avgCount.put(gbField, avgCount.get(gbField).add(BigInteger.ONE));
+                
+                //Integer num = prevVal + aggVal;
+                //gbValues.put(gbField, num);
                 break;
             case OPE_MIN:
                 // TODO: Replace with OPE implementation
-                gbValues.put(gbField, prevVal < aggVal ? prevVal : aggVal);
+                gbValues.put(gbField, prevVal.min(aggVal));
                 break;
             case OPE_MAX:
                 // TODO: Replace with OPE implementation
-                gbValues.put(gbField, prevVal < aggVal ? aggVal : prevVal);
+                gbValues.put(gbField, prevVal.max(aggVal));
                 break;
             case COUNT:
-                gbValues.put(gbField, prevVal + 1);
+                gbValues.put(gbField, prevVal.add(BigInteger.ONE));
             case SUM_COUNT:
             case SC_AVG:
                 //throw new NoSuchElementException("This will be implemented in lab7");
@@ -106,24 +142,29 @@ public class EncryptedIntegerAggregator implements EncryptedAggregator {
             TupleDesc td = new TupleDesc(new Type[]{Type.INT_TYPE});
             Tuple t = new Tuple(td);
             Field gb = new IntField(gbfield);
-            Integer value = gbValues.get(new IntField(gbfield));
-
-            // TODO: Make sure this still works with Paillier
-            if (op.equals(Op.AVG)) value /= avgCount.get(gb); // late average
-            t.setField(0, new IntField(value));
+            BigInteger value = (BigInteger) gbValues.get(new IntField(gbfield));
+            
+            // Multiply by one over count to divide TODO: Test that this works
+            if (op.equals(EncOp.PAILLIER_AVG)) {
+                value = Paillier.constMult(value, BigInteger.ONE.divide(avgCount.get(gb)), publicKey);
+            }
+            t.setField(0, new IntField(value.intValueExact()));
             results.add(t);
             return new TupleIterator(td, results);
         } else {
             // Regular case, return (groupVal, aggVal) pairs
             TupleDesc td = new TupleDesc(new Type[]{gbfieldtype, Type.INT_TYPE});
+               
             for (Field gb : gbValues.keySet()) {
                 Tuple t = new Tuple(td);
-                Integer value = gbValues.get(gb);
+                BigInteger value = gbValues.get(gb);
 
                 // TODO: Make sure this still works with Paillier
-                if (op.equals(Op.AVG)) value /= avgCount.get(gb); // late average
+                if (op.equals(EncOp.PAILLIER_AVG)) {
+                    value = Paillier.constMult(value, BigInteger.ONE.divide(avgCount.get(gb)), publicKey);
+                }
                 t.setField(0, gb);
-                t.setField(1, new IntField(value));                    
+                t.setField(1, new IntField(value.intValueExact()));                    
                 results.add(t);
             }
             return new TupleIterator(td, results);

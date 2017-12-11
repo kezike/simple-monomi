@@ -1,5 +1,6 @@
 package simpledb;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
 /**
@@ -7,7 +8,7 @@ import java.math.BigInteger;
  * 
  * Borrowed from https://github.com/kunerd/jpaillier
  */
-public class KeyPair {
+public class KeyPair implements Serializable {
 
     private final PrivateKey privateKey;
     private final PublicKey publicKey;
