@@ -7,10 +7,6 @@ import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class OPE {
-    /*public enum ENC_MODE implements Serializable {
-        ADD, MULT, POWER, CRYPTO;
-    }*/
-
     public class OPE_Node {
         private Integer value;
         private OPE_Node less;
@@ -52,113 +48,7 @@ public class OPE {
             return this.more;
         }
     }
-
-    /**
-      * An interface for defining encrypt/decrypt functions
-      */
-    public interface OPE_Cipher {
-        public Integer encrypt(Integer val);
-        public Integer decrypt(Integer val);
-    }
-
-    /**
-      * An addition implementation of the OPE_Cipher interface
-      */
-    public class OPE_Add implements OPE_Cipher {
-        private Integer cipher;
-
-        public OPE_Add(Integer cipher) {
-            this.cipher = cipher;
-        }
-        
-        public Integer encrypt(Integer val) {
-            return val + this.cipher;
-        }
-        
-        public Integer decrypt(Integer val) {
-            return val - this.cipher;
-        }
-    }
-
-    /**
-      * A subtraction implementation of the OPE_Cipher interface
-      */
-    public class OPE_Sub implements OPE_Cipher {
-        private Integer cipher;
-
-        public OPE_Sub(Integer cipher) {
-            this.cipher = cipher;
-        }
-        
-        public Integer encrypt(Integer val) {
-            return val - this.cipher;
-        }
-        
-        public Integer decrypt(Integer val) {
-            return val + this.cipher;
-        }
-    }
-
-    /**
-      * A multiplication implementation of the OPE_Cipher interface
-      */
-    public class OPE_Mult implements OPE_Cipher {
-        private Integer cipher;
-
-        public OPE_Mult(Integer cipher) {
-            this.cipher = cipher;
-        }
-        
-        public Integer encrypt(Integer val) {
-            return val * this.cipher;
-        }
-        
-        public Integer decrypt(Integer val) {
-            return val / this.cipher;
-        }
-    }
-
-    /**
-      * A division implementation of the OPE_Cipher interface
-      */
-    public class OPE_Div implements OPE_Cipher {
-        private Integer cipher;
-
-        public OPE_Div(Integer cipher) {
-            this.cipher = cipher;
-        }
-        
-        public Integer encrypt(Integer val) {
-            return val / this.cipher;
-        }
-        
-        public Integer decrypt(Integer val) {
-            return val * this.cipher;
-        }
-    }
-
-
-    /**
-      * A linear implementation of the OPE_Cipher interface
-      */
-    public class OPE_Line implements OPE_Cipher {
-        private Integer cipher_slope;
-        private Integer cipher_y_int;
-
-        public OPE_Line(Integer cipher_m, Integer cipher_b) {
-            this.cipher_slope = cipher_m;
-            this.cipher_y_int = cipher_b;
-        }
-        
-        public Integer encrypt(Integer val) {
-            return this.cipher_slope * val + cipher_y_int;
-        }
-        
-        public Integer decrypt(Integer val) {
-            return (val - cipher_y_int) / cipher_slope;
-        }
-    }
-
+    
     private OPE_Cipher cipher;
     private OPE_Node ope_node;
     private ConcurrentHashMap<Integer, Integer> encryption_map;
@@ -196,36 +86,6 @@ public class OPE {
     public Integer decrypt(Integer val) {
         return this.cipher.decrypt(val);
     }
-
-    /*public Integer encrypt(Integer val) {
-        Integer encrypted_value = new Integer(0);
-        if (this.enc_mode == ENC_MODE.ADD) {
-          encrypted_value = val + this.cipher;
-          encryption_map.put(val, encrypted_value);
-        } else if (this.enc_mode == ENC_MODE.MULT) {
-          encrypted_value = val * this.cipher;
-          encryption_map.put(val, encrypted_value);
-        } else if (this.enc_mode == ENC_MODE.POWER) {
-          // TODO
-        } else if (this.enc_mode == ENC_MODE.CRYPTO) {
-          // TODO
-        }
-        return encrypted_value;
-    }
-    
-    public Integer decrypt(Integer val) {
-        Integer decrypted_value = new Integer(0);
-        if (this.enc_mode == ENC_MODE.ADD) {
-          decrypted_value = val - this.cipher;
-        } else if (this.enc_mode == ENC_MODE.MULT) {
-          decrypted_value = val / this.cipher;
-        } else if (this.enc_mode == ENC_MODE.POWER) {
-          // TODO
-        } else if (this.enc_mode == ENC_MODE.CRYPTO) {
-          // TODO
-        }
-        return decrypted_value;
-    }*/
     
     private OPE_Node buildOPETree(ArrayList<Integer> values, int start_idx, int end_idx) {
         if (start_idx > end_idx) {
