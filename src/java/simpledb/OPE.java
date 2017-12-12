@@ -4,15 +4,16 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.concurrent.ConcurrentHashMap;
+import java.math.BigInteger;
+// import java.util.concurrent.ConcurrentHashMap;
 
 public class OPE {
     public class OPE_Node {
-        private Integer value;
+        private BigInteger value;
         private OPE_Node less;
         private OPE_Node more;
 
-        public OPE_Node(Integer val) {
+        public OPE_Node(BigInteger val) {
             this.value = val;
             this.less = null;
             this.more = null;
@@ -24,11 +25,11 @@ public class OPE {
             this.more = null;
         }
 
-        public void setValue(Integer val) {
+        public void setValue(BigInteger val) {
             this.value = val;
         }
 
-        public Integer getValue() {
+        public BigInteger getValue() {
             return this.value;
         }
 
@@ -51,17 +52,17 @@ public class OPE {
     
     // private OPE_Cipher cipher;
     private OPE_Node ope_node;
-    // private ConcurrentHashMap<Integer, Integer> encryption_map;
-    // private ConcurrentHashMap<Integer, Integer> decryption_map;
+    // private ConcurrentHashMap<BigInteger, BigInteger> encryption_map;
+    // private ConcurrentHashMap<BigInteger, BigInteger> decryption_map;
 
     public OPE(/*OPE_Cipher cipher*/) {
         // this.cipher = cipher;
         this.ope_node = new OPE_Node();
-        // this.encryption_map = new ConcurrentHashMap<Integer, Integer>();
+        // this.encryption_map = new ConcurrentHashMap<BigInteger, BigInteger>();
     }
     
-    private ArrayList<Integer> sort(HeapFile hf, int col) throws DbException, TransactionAbortedException {
-        HashSet<Integer> values = new HashSet<Integer>();
+    private ArrayList<BigInteger> sort(HeapFile hf, int col) throws DbException, TransactionAbortedException {
+        HashSet<BigInteger> values = new HashSet<BigInteger>();
         DbFileIterator hf_iter = hf.iterator(new TransactionId());
         hf_iter.open();
         while (hf_iter.hasNext()) {
@@ -70,29 +71,29 @@ public class OPE {
           if (field.getType() == Type.INT_TYPE) {
             IntField int_field = (IntField) field;
             int int_val = int_field.getValue();
-            values.add(new Integer(int_val));
+            values.add(BigInteger.valueOf(int_val));
           }
         }
         hf_iter.close();
-        ArrayList<Integer> values_list = new ArrayList(values);
+        ArrayList<BigInteger> values_list = new ArrayList(values);
         Collections.sort(values_list);
         return values_list;
     }
 
-    /*public Integer encrypt(Integer val) {
+    /*public BigInteger encrypt(BigInteger val) {
         return this.cipher.encrypt(val);
     }
 
-    public Integer decrypt(Integer val) {
+    public BigInteger decrypt(BigInteger val) {
         return this.cipher.decrypt(val);
     }*/
     
-    private OPE_Node buildOPETree(ArrayList<Integer> values, int start_idx, int end_idx) {
+    private OPE_Node buildOPETree(ArrayList<BigInteger> values, int start_idx, int end_idx) {
         if (start_idx > end_idx) {
           return null;
         }
         int mid_idx = start_idx + (end_idx - start_idx) / 2;
-        Integer mid_val = values.get(mid_idx);
+        BigInteger mid_val = values.get(mid_idx);
         OPE_Node node = new OPE_Node(mid_val);
         OPE_Node less = this.buildOPETree(values, start_idx, mid_idx - 1);
         OPE_Node more = this.buildOPETree(values, mid_idx + 1, end_idx);
@@ -102,9 +103,9 @@ public class OPE {
     }
 
     public OPE_Node encrypt(HeapFile file, int col, OPE_CipherPublic cipher) throws DbException, TransactionAbortedException {
-        ArrayList<Integer> values = this.sort(file, col);
-        ArrayList<Integer> values_enc = new ArrayList<Integer>();
-        for (Integer value : values) {
+        ArrayList<BigInteger> values = this.sort(file, col);
+        ArrayList<BigInteger> values_enc = new ArrayList<BigInteger>();
+        for (BigInteger value : values) {
           values_enc.add(cipher.encrypt(value));
         }
         int start_idx = 0;

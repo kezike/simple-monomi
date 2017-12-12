@@ -9,20 +9,20 @@ import org.junit.Test;
 
 public class KeyPairBuilderPrivateKeyTest {
 
-    private KeyPairBuilder keygen;
-    private KeyPair keypair;
-    private PrivateKey privateKey;
+    private Paillier_KeyPairBuilder keygen;
+    private Paillier_KeyPair keypair;
+    private Paillier_PrivateKey privateKey;
 
     @Before
     public void init() {
-        this.keygen = new KeyPairBuilder();
+        this.keygen = new Paillier_KeyPairBuilder();
         this.keypair = keygen.generateKeyPair();
         this.privateKey = keypair.getPrivateKey();
     }
 
     @Test
     public void testPreCalculatedDenominator() {
-        PublicKey publicKey = keypair.getPublicKey();
+        Paillier_PublicKey publicKey = keypair.getPublicKey();
 
         BigInteger preCalculatedDenominator = privateKey.getPreCalculatedDenominator();
 

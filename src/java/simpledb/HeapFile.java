@@ -5,6 +5,7 @@ import static org.junit.Assert.fail;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * HeapFile is an implementation of a DbFile that stores a collection of tuples
@@ -18,12 +19,16 @@ import java.util.*;
  */
 public class HeapFile implements DbFile {
 
+    // Prefix for the Paillier column name
+    public static final String PAILLIER_PREFIX = "PAILLIER_";
+    // Prefix for the OPE column name
+    public static final String OPE_PREFIX = "OPE_";
     // Prefixes for the column names that will be given to the new TupleDesc
-    public static final String[] ENCRYPTION_PREFIXES = new String[]{"PAILLIER_", "OPE_"};
+    public static final String[] ENCRYPTION_PREFIXES = new String[]{PAILLIER_PREFIX, OPE_PREFIX};
     // Determines how many new columns the EncryptedFile will have per original column
     public static final int NUM_ENCRYPTIONS = ENCRYPTION_PREFIXES.length;
     // Suffix added to the end of the HeapFile's name when encrypted
-    public static final String ENCRYPTION_SUFFIX = "_encrypted";
+    public static final String ENCRYPTION_SUFFIX = "_enc";
     // Name of the column with Paillier modulus
     public static final String PAILLIER_MODULUS = ENCRYPTION_PREFIXES[0] + "MODULUS";
     // Name of the column with Paillier G
@@ -37,7 +42,8 @@ public class HeapFile implements DbFile {
     
     private File file;
     private TupleDesc tupDesc;
-    private PrivateKey privateKey = null;
+    private ConcurrentHashMap<String, PublicKey> publicKey;
+    private ConcurrentHashMap<String, PrivateKey> privateKey;
 
     /**
      * FileTupleIterator implements DbFileIterator
@@ -144,32 +150,36 @@ public class HeapFile implements DbFile {
      * the modulus n of the Paillier public key.
      * @return An EncryptedFile that contains the encrypted contents of this HeapFile
      */
-    public EncryptedFile encrypt() throws IOException, DbException, 
+    public EncryptedFile encrypt(ConcurrentHashMap<String, KeyPair> keyPairs) throws IOException, DbException, 
                                           TransactionAbortedException {
         // TODO: Apply the relevant encryption schemes to each tuple in each page
         // essentially iterate through all the tuples and create a new encrypted table
         // that has twice the number of columns
-        
+    	
+    	this.publicKey = new ConcurrentHashMap<String, PublicKey>();
+    	this.privateKey = new ConcurrentHashMap<String, PrivateKey>();
+    	
         // Create a new TupleDescriptor that includes the new columns
         // +1 for the paillier modulus column and +1 for the Paillier g column
-        int totalNumFields = tupDesc.numFields() * NUM_ENCRYPTIONS + NUM_EXTRA_COLUMNS;
+        int origNumFields = tupDesc.numFields();
+        int newNumFields = origNumFields * NUM_ENCRYPTIONS + NUM_EXTRA_COLUMNS;
         
-        Type[] newTypes = new Type[totalNumFields];
-        String[] newNames = new String[totalNumFields];
-        int i = 0;
+        Type[] newTypes = new Type[newNumFields];
+        String[] newNames = new String[newNumFields];
         
         // Create a new column for each encryption scheme
-        for (TDItem td : tupDesc.getItems()) {
-            for (int j=0; j < NUM_ENCRYPTIONS; j++) {
-                newTypes[i] = td.getFieldType();
-                newNames[i] = ENCRYPTION_PREFIXES[j] + td.getFieldName(); // TODO: Check for NPE
-                i++;
+        for (int i = 0; i < NUM_ENCRYPTIONS; i++) {
+            for (int j = 0; j < origNumFields; j++) {
+                TDItem td = tupDesc.getItems().get(j);
+                newTypes[i * origNumFields + j] = td.getFieldType();
+                newNames[i * origNumFields + j] = ENCRYPTION_PREFIXES[j] + td.getFieldName(); // TODO: Check for NPE
             }
         }
+
         // Add one more column that has the public key values for paillier encryption
         // First extra column is N, second extra column is G
-        int nColumn = totalNumFields - 2;
-        int gColumn = totalNumFields - 1; // last column
+        int nColumn = newNumFields - 2;
+        int gColumn = newNumFields - 1; // last column
         newTypes[nColumn] = Type.INT_TYPE;
         newNames[nColumn] = PAILLIER_MODULUS;
         newTypes[gColumn] = Type.INT_TYPE;
@@ -204,57 +214,74 @@ public class HeapFile implements DbFile {
         HeapFileIterator hfi = (HeapFileIterator) this.iterator(null);
         hfi.open();
         
-        // Create new KeyPair for the whole table
+        // Create new Pallier KeyPair for the whole table
         // TODO: PUT encryption keys somehwere
-        KeyPair keyPair;
-        PublicKey publicKey;
-        KeyPairBuilder keygen = new KeyPairBuilder();
-        keygen.upperBound(BigInteger.valueOf(Integer.MAX_VALUE));
-        keygen.bits(BITS_INTEGER);
-        keyPair = keygen.generateKeyPair();
-        publicKey = keyPair.getPublicKey();
+        Paillier_KeyPair paillerKeyPair;
+        Paillier_PublicKey paillierPublicKey;
+        Paillier_PrivateKey paillierPrivateKey;
+        Paillier_KeyPairBuilder paillierKeyGen = new Paillier_KeyPairBuilder();
+        paillierKeyGen.upperBound(BigInteger.valueOf(Integer.MAX_VALUE));
+        paillierKeyGen.bits(BITS_INTEGER);
+        paillerKeyPair = paillierKeyGen.generateKeyPair();
+        paillierPublicKey = paillerKeyPair.getPublicKey();
+        paillierPrivateKey = paillerKeyPair.getPrivateKey();
+        this.publicKey.put(PAILLIER_PREFIX, paillierPublicKey);
+        this.privateKey.put(PAILLIER_PREFIX, paillierPrivateKey);
+
+        // Create new OPE KeyPair for the whole table
+        // TODO: PUT encryption keys somewhere
+        OPE_KeyPair opeKeyPair = (OPE_KeyPair) keyPairs.get(OPE_PREFIX);;
+        OPE_PublicKey opePublicKey = opeKeyPair.getPublicKey();
+        OPE_PrivateKey opePrivateKey = opeKeyPair.getPrivateKey();
+        this.publicKey.put(OPE_PREFIX, opePublicKey);
+        this.privateKey.put(OPE_PREFIX, opePrivateKey);
         
         // TODO: This line is for testing only
-        this.privateKey = keyPair.getPrivateKey();
-        System.out.println("Public key: " + publicKey.toString());
-        System.out.println("Private key: " + privateKey.toString());
+        System.out.println("Public key: " + this.publicKey.toString());
+        System.out.println("Private key: " + this.privateKey.toString());
         
         
         // TODO: Come up with convention for saving all the different private keys. Do we
         // want a file for each key, or one file with all the keys for the file
-        saveKeyPair(keyPair, String.valueOf(getId()) + ".paillier");
+        saveKeyPair(keyPairs.get(PAILLIER_PREFIX), String.valueOf(getId()) + ".paillier");
+        saveKeyPair(keyPairs.get(OPE_PREFIX), String.valueOf(getId()) + ".ope");
         
         while (hfi.hasNext()) {
             Tuple originalTuple = hfi.next();
             Tuple encTuple = new Tuple(newTD); // Tuple to save encrypted data, has 2n+2 columns
             int originalNumFields = originalTuple.getTupleDesc().numFields();
             
-            for(int j=0; j < originalNumFields; j++) {
-                // Paillier Encryption
+            // Paillier Encryption
+            for (int j = 0; j < originalNumFields; j++) {
                 Integer fieldValue = ((IntField) originalTuple.getField(j)).getValue();
                 BigInteger plainData = BigInteger.valueOf((long) fieldValue);
-                BigInteger encryptedData = publicKey.encrypt(plainData);
+                BigInteger encryptedData = paillierPublicKey.encrypt(plainData);
                 IntField encryptedField = new IntField(encryptedData.intValueExact()); // TODO: Change
                 encTuple.setField(j, encryptedField);
-                System.out.println("Encrypted " + plainData + " to " + encryptedData);
+                System.out.println("Encrypted " + plainData + " to " + encryptedData + " with Paillier");
             }
 
-            for (int j = originalNumFields; j < originalNumFields*2; j++) {
-                // TODO: OPE of tuple field   
-                // For now, to test, just store the unencrypted values
-                encTuple.setField(j, originalTuple.getField(j-originalNumFields));
+            // OPE Encryption
+            for (int j = originalNumFields; j < originalNumFields; j++) {
+                Integer fieldValue = ((IntField) originalTuple.getField(j)).getValue();
+                BigInteger plainData = BigInteger.valueOf((long) fieldValue);
+                BigInteger encryptedData = opePublicKey.encrypt(plainData);
+                IntField encryptedField = new IntField(encryptedData.intValueExact()); // TODO: Change
+                encTuple.setField(j, encryptedField);
+                System.out.println("Encrypted " + plainData + " to " + encryptedData + " with OPE");
             }
             
             // Save public key values
-            IntField N = new IntField(publicKey.getN().intValueExact());
+            IntField N = new IntField(paillierPublicKey.getN().intValueExact());
             encTuple.setField(nColumn, N);
-            IntField G = new IntField(publicKey.getG().intValueExact());
+            IntField G = new IntField(paillierPublicKey.getG().intValueExact());
             encTuple.setField(gColumn, G);
             
             // write tuple to file
             encF.insertTuple(null, encTuple);
         }
-        
+
+        hfi.close();
         return encF;
     }
 
@@ -275,11 +302,11 @@ public class HeapFile implements DbFile {
     }
     
     /**
-     * FOR TESTING ONLY: Gets the private key associated with this file
+     * FOR TESTING ONLY: Gets the private key associated with this file for given scheme
      * @return
      */
-    public PrivateKey getPrivateKey() {
-        return this.privateKey;
+    public PrivateKey getPrivateKey(String encScheme) {
+        return this.privateKey.get(encScheme);
     }
         
     /**

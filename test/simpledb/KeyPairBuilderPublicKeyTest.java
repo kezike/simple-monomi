@@ -11,13 +11,13 @@ public class KeyPairBuilderPublicKeyTest {
 
     final int BITS = 1024;
 
-    private KeyPairBuilder keygen;
-    private KeyPair keypair;
-    private PublicKey publicKey;
+    private Paillier_KeyPairBuilder keygen;
+    private Paillier_KeyPair keypair;
+    private Paillier_PublicKey publicKey;
 
     @Before
     public void init() {
-        this.keygen = new KeyPairBuilder();
+        this.keygen = new Paillier_KeyPairBuilder();
         this.keypair = keygen.generateKeyPair();
         this.publicKey = keypair.getPublicKey();
     }
@@ -38,7 +38,7 @@ public class KeyPairBuilderPublicKeyTest {
 
     @Test
     public void testCalculationOfGOfG() {
-        PrivateKey privateKey = keypair.getPrivateKey();
+        Paillier_PrivateKey privateKey = keypair.getPrivateKey();
 
         BigInteger n = publicKey.getN();
         BigInteger nSquared = publicKey.getnSquared();

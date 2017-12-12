@@ -1,5 +1,6 @@
 package simpledb;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
 /**
@@ -7,7 +8,7 @@ import java.math.BigInteger;
  * 
  * Borrowed from https://github.com/kunerd/jpaillier
  */
-public class OPE_KeyPair {
+public class OPE_KeyPair implements KeyPair, Serializable {
 
     private final OPE_PrivateKey privateKey;
     private final OPE_PublicKey publicKey;
@@ -31,7 +32,7 @@ public class OPE_KeyPair {
      * @param val The ciphertext that should be decrypted.
      * @return The corresponding plaintext.
      */
-    public Integer decrypt(Integer val) {
+    public BigInteger decrypt(BigInteger val) {
         return this.privateKey.decrypt(val);
     }
 }

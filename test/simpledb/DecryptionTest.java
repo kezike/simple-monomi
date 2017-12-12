@@ -39,9 +39,9 @@ public class DecryptionTest {
 
     @Test
     public void test() {
-        KeyPair keyPair = new KeyPairBuilder().upperBound(BigInteger.valueOf(Long.MAX_VALUE))
+        Paillier_KeyPair keyPair = new Paillier_KeyPairBuilder().upperBound(BigInteger.valueOf(Long.MAX_VALUE))
                 .generateKeyPair();
-        PublicKey publicKey = keyPair.getPublicKey();
+        Paillier_PublicKey publicKey = keyPair.getPublicKey();
 
         BigInteger encryptedData = publicKey.encrypt(input);
 

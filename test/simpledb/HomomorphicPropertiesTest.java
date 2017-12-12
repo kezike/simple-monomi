@@ -9,12 +9,12 @@ import org.junit.Test;
 
 public class HomomorphicPropertiesTest {
 
-    private KeyPair keypair;
-    private PublicKey publicKey;
+    private Paillier_KeyPair keypair;
+    private Paillier_PublicKey publicKey;
 
     @Before
     public void init() {
-        KeyPairBuilder keygen = new KeyPairBuilder();
+        Paillier_KeyPairBuilder keygen = new Paillier_KeyPairBuilder();
         this.keypair = keygen.generateKeyPair();
         this.publicKey = keypair.getPublicKey();
     }

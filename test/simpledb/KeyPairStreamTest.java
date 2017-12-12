@@ -24,13 +24,13 @@ public class KeyPairStreamTest {
     final static int BITS = 1024;
     final static int BITS_INTEGER = 15;
 
-    private static KeyPairBuilder keygen;
-    private static KeyPair keyPair;
-    private static PublicKey publicKey;
+    private static Paillier_KeyPairBuilder keygen;
+    private static Paillier_KeyPair keyPair;
+    private static Paillier_PublicKey publicKey;
 
     @BeforeClass
     public static void init() {
-        keygen = new KeyPairBuilder();
+        keygen = new Paillier_KeyPairBuilder();
         keygen.upperBound(BigInteger.valueOf(Integer.MAX_VALUE));
         keygen.bits(BITS_INTEGER);
         keyPair = keygen.generateKeyPair();
@@ -54,7 +54,7 @@ public class KeyPairStreamTest {
     public void testOutput() {
 		try {
 	        ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream("object.data"));
-	        KeyPair keyPairFromFile = (KeyPair) objectInputStream.readObject();
+	        Paillier_KeyPair keyPairFromFile = (Paillier_KeyPair) objectInputStream.readObject();
 	        objectInputStream.close();
 	        System.out.println("Expected: " + keyPair.getPublicKey().toString());
 	        System.out.println("Actual: " + keyPairFromFile.getPublicKey().toString());

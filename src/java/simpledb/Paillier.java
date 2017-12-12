@@ -21,7 +21,7 @@ public class Paillier {
      * @param P the PublicKey used to encrypt A and B 
      * @return their Paillier sum
      */
-    public static BigInteger add(BigInteger encA, BigInteger encB, PublicKey P) {
+    public static BigInteger add(BigInteger encA, BigInteger encB, Paillier_PublicKey P) {
         return encA.multiply(encB).mod(P.getnSquared());
     }
     
@@ -33,7 +33,7 @@ public class Paillier {
      * @param P the PublicKey used to encrypt encryptedA
      * @return The product
      */
-    public static BigInteger constMult(BigInteger encA, BigInteger B, PublicKey P) {
+    public static BigInteger constMult(BigInteger encA, BigInteger B, Paillier_PublicKey P) {
         return encA.modPow(B, P.getnSquared());
     }
     

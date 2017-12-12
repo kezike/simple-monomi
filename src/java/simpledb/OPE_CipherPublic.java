@@ -1,23 +1,25 @@
 package simpledb;
 
+import java.math.BigInteger;
+
 /**
  * An interface for defining encrypt functions
  */
 public interface OPE_CipherPublic {
-   public Integer encrypt(Integer val);
+   public BigInteger encrypt(BigInteger val);
    
    /**
     * An addition implementation of the OPE_CipherPublic interface
     */
    public class Add implements OPE_CipherPublic {
-      private Integer cipher;
+      private BigInteger cipher;
 
-      public Add(Integer cipher) {
+      public Add(BigInteger cipher) {
           this.cipher = cipher;
       }
       
-      public Integer encrypt(Integer val) {
-          return val + this.cipher;
+      public BigInteger encrypt(BigInteger val) {
+          return val.add(this.cipher);
       }
    }
 
@@ -25,14 +27,14 @@ public interface OPE_CipherPublic {
     * A subtraction implementation of the OPE_CipherPublic interface
     */
    public class Sub implements OPE_CipherPublic {
-      private Integer cipher;
+      private BigInteger cipher;
 
-      public Sub(Integer cipher) {
+      public Sub(BigInteger cipher) {
           this.cipher = cipher;
       }
       
-      public Integer encrypt(Integer val) {
-          return val - this.cipher;
+      public BigInteger encrypt(BigInteger val) {
+          return val.subtract(this.cipher);
       }
    }
 
@@ -40,14 +42,14 @@ public interface OPE_CipherPublic {
     * A multiplication implementation of the OPE_CipherPublic interface
     */
    public class Mult implements OPE_CipherPublic {
-      private Integer cipher;
+      private BigInteger cipher;
 
-      public Mult(Integer cipher) {
+      public Mult(BigInteger cipher) {
           this.cipher = cipher;
       }
       
-      public Integer encrypt(Integer val) {
-          return val * this.cipher;
+      public BigInteger encrypt(BigInteger val) {
+          return val.multiply(this.cipher);
       }
    }
 
@@ -55,16 +57,16 @@ public interface OPE_CipherPublic {
     * A linear implementation of the OPE_CipherPublic interface
     */
    public class Line implements OPE_CipherPublic {
-      private Integer cipher_slope;
-      private Integer cipher_y_int;
+      private BigInteger cipher_slope;
+      private BigInteger cipher_y_int;
 
-      public Line(Integer cipher_m, Integer cipher_b) {
+      public Line(BigInteger cipher_m, BigInteger cipher_b) {
           this.cipher_slope = cipher_m;
           this.cipher_y_int = cipher_b;
       }
       
-      public Integer encrypt(Integer val) {
-          return this.cipher_slope * val + cipher_y_int;
+      public BigInteger encrypt(BigInteger val) {
+          return this.cipher_slope.multiply(val).add(cipher_y_int);
       }
    }
 }

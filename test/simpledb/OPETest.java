@@ -8,6 +8,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import junit.framework.JUnit4TestAdapter;
 import java.io.File;
+import java.math.BigInteger;
 
 public class OPETest {
     private OPE_CipherPublic.Add add_15_pub;
@@ -32,14 +33,14 @@ public class OPETest {
      */
     @Before
     public void setupOPETest() throws Exception {
-        this.add_15_pub = new OPE_CipherPublic.Add(15);
-        this.add_15_priv = new OPE_CipherPrivate.Add(15);
-        this.sub_3_pub = new OPE_CipherPublic.Sub(3);
-        this.sub_3_priv = new OPE_CipherPrivate.Sub(3);
-        this.mult_7_pub = new OPE_CipherPublic.Mult(7);
-        this.mult_7_priv = new OPE_CipherPrivate.Mult(7);
-        this.line_3_1_pub = new OPE_CipherPublic.Line(3, 1);
-        this.line_3_1_priv = new OPE_CipherPrivate.Line(3, 1);
+        this.add_15_pub = new OPE_CipherPublic.Add(BigInteger.valueOf(15));
+        this.add_15_priv = new OPE_CipherPrivate.Add(BigInteger.valueOf(15));
+        this.sub_3_pub = new OPE_CipherPublic.Sub(BigInteger.valueOf(3));
+        this.sub_3_priv = new OPE_CipherPrivate.Sub(BigInteger.valueOf(3));
+        this.mult_7_pub = new OPE_CipherPublic.Mult(BigInteger.valueOf(7));
+        this.mult_7_priv = new OPE_CipherPrivate.Mult(BigInteger.valueOf(7));
+        this.line_3_1_pub = new OPE_CipherPublic.Line(BigInteger.valueOf(3), BigInteger.ONE);
+        this.line_3_1_priv = new OPE_CipherPrivate.Line(BigInteger.valueOf(3), BigInteger.ONE);
 
         // this.ope_add_15 = new OPE(add_15);
         // this.ope_sub_3 = new OPE(sub_3);
@@ -69,9 +70,9 @@ public class OPETest {
             Field field = tuple.getField(i);
             if (field.getType() == Type.INT_TYPE) {
               IntField int_field = (IntField) field;
-              Integer val_orig = int_field.getValue();
-              Integer val_enc = pub_key.encrypt(val_orig);
-              Integer val_dec = key_pair.decrypt(val_enc);
+              BigInteger val_orig = BigInteger.valueOf(int_field.getValue());
+              BigInteger val_enc = pub_key.encrypt(val_orig);
+              BigInteger val_dec = key_pair.decrypt(val_enc);
               assertFalse(val_orig.equals(val_enc));
               assertFalse(val_enc.equals(val_dec));
               assertEquals(val_orig, val_dec);
@@ -96,9 +97,9 @@ public class OPETest {
             Field field = tuple.getField(i);
             if (field.getType() == Type.INT_TYPE) {
               IntField int_field = (IntField) field;
-              Integer val_orig = int_field.getValue();
-              Integer val_enc = pub_key.encrypt(val_orig);
-              Integer val_dec = key_pair.decrypt(val_enc);
+              BigInteger val_orig = BigInteger.valueOf(int_field.getValue());
+              BigInteger val_enc = pub_key.encrypt(val_orig);
+              BigInteger val_dec = key_pair.decrypt(val_enc);
               assertFalse(val_orig.equals(val_enc));
               assertFalse(val_enc.equals(val_dec));
               assertEquals(val_orig, val_dec);
@@ -123,9 +124,9 @@ public class OPETest {
             Field field = tuple.getField(i);
             if (field.getType() == Type.INT_TYPE) {
               IntField int_field = (IntField) field;
-              Integer val_orig = int_field.getValue();
-              Integer val_enc = pub_key.encrypt(val_orig);
-              Integer val_dec = key_pair.decrypt(val_enc);
+              BigInteger val_orig = BigInteger.valueOf(int_field.getValue());
+              BigInteger val_enc = pub_key.encrypt(val_orig);
+              BigInteger val_dec = key_pair.decrypt(val_enc);
               assertFalse(val_orig.equals(val_enc));
               assertFalse(val_enc.equals(val_dec));
               assertEquals(val_orig, val_dec);
@@ -150,9 +151,9 @@ public class OPETest {
             Field field = tuple.getField(i);
             if (field.getType() == Type.INT_TYPE) {
               IntField int_field = (IntField) field;
-              Integer val_orig = int_field.getValue();
-              Integer val_enc = pub_key.encrypt(val_orig);
-              Integer val_dec = key_pair.decrypt(val_enc);
+              BigInteger val_orig = BigInteger.valueOf(int_field.getValue());
+              BigInteger val_enc = pub_key.encrypt(val_orig);
+              BigInteger val_dec = key_pair.decrypt(val_enc);
               assertFalse(val_orig.equals(val_enc));
               assertFalse(val_enc.equals(val_dec));
               assertEquals(val_orig, val_dec);

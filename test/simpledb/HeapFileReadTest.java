@@ -142,12 +142,12 @@ public class HeapFileReadTest extends SimpleDbTestBase {
         } catch (NoSuchElementException e) {
         }
 
-        KeyPair keyPairFromFile;
+        Paillier_KeyPair keyPairFromFile;
         try {
             String filename = String.valueOf(smallFile.getId()) + ".paillier";
             ObjectInputStream objectInputStream = 
                     new ObjectInputStream(new FileInputStream(filename));
-            keyPairFromFile = (KeyPair) objectInputStream.readObject();
+            keyPairFromFile = (Paillier_KeyPair) objectInputStream.readObject();
             objectInputStream.close();
             
             DbFileIterator encIt = encF.iterator(tid);

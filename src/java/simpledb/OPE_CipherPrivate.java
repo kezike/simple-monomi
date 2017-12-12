@@ -1,23 +1,25 @@
 package simpledb;
 
+import java.math.BigInteger;
+
 /**
  * An interface for defining decrypt functions
  */
 public interface OPE_CipherPrivate {
-   public Integer decrypt(Integer val);
+   public BigInteger decrypt(BigInteger val);
    
    /**
     * An addition implementation of the OPE_CipherPrivate interface
     */
    public class Add implements OPE_CipherPrivate {
-      private Integer cipher;
+      private BigInteger cipher;
 
-      public Add(Integer cipher) {
+      public Add(BigInteger cipher) {
           this.cipher = cipher;
       }
       
-      public Integer decrypt(Integer val) {
-          return val - this.cipher;
+      public BigInteger decrypt(BigInteger val) {
+          return val.subtract(this.cipher);
       }
    }
 
@@ -25,14 +27,14 @@ public interface OPE_CipherPrivate {
     * A subtraction implementation of the OPE_CipherPrivate interface
     */
    public class Sub implements OPE_CipherPrivate {
-      private Integer cipher;
+      private BigInteger cipher;
 
-      public Sub(Integer cipher) {
+      public Sub(BigInteger cipher) {
           this.cipher = cipher;
       }
       
-      public Integer decrypt(Integer val) {
-          return val + this.cipher;
+      public BigInteger decrypt(BigInteger val) {
+          return val.add(this.cipher);
       }
    }
 
@@ -40,14 +42,14 @@ public interface OPE_CipherPrivate {
     * A multiplication implementation of the OPE_CipherPrivate interface
     */
    public class Mult implements OPE_CipherPrivate {
-      private Integer cipher;
+      private BigInteger cipher;
 
-      public Mult(Integer cipher) {
+      public Mult(BigInteger cipher) {
           this.cipher = cipher;
       }
       
-      public Integer decrypt(Integer val) {
-          return val / this.cipher;
+      public BigInteger decrypt(BigInteger val) {
+          return val.divide(this.cipher);
       }
    }
 
@@ -55,16 +57,16 @@ public interface OPE_CipherPrivate {
     * A linear implementation of the OPE_CipherPrivate interface
     */
    public class Line implements OPE_CipherPrivate {
-      private Integer cipher_slope;
-      private Integer cipher_y_int;
+      private BigInteger cipher_slope;
+      private BigInteger cipher_y_int;
 
-      public Line(Integer cipher_m, Integer cipher_b) {
+      public Line(BigInteger cipher_m, BigInteger cipher_b) {
           this.cipher_slope = cipher_m;
           this.cipher_y_int = cipher_b;
       }
       
-      public Integer decrypt(Integer val) {
-          return (val - cipher_y_int) / cipher_slope;
+      public BigInteger decrypt(BigInteger val) {
+          return val.subtract(cipher_y_int).divide(cipher_slope);
       }
    }
 }

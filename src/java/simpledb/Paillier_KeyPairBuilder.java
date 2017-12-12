@@ -9,9 +9,9 @@ import java.util.Random;
  * keys.
  *
  * Borrowed from https://github.com/kunerd/jpaillier
- * @see KeyPair
+ * @see Paillier_KeyPair
  */
-public class KeyPairBuilder {
+public class Paillier_KeyPairBuilder {
 
     private int bits = 1024;
 
@@ -29,7 +29,7 @@ public class KeyPairBuilder {
      * @param bits The size of the key in bits.
      * @return This instance of KeyPairBuilder for method chaining.
      */
-    public KeyPairBuilder bits(int bits) {
+    public Paillier_KeyPairBuilder bits(int bits) {
         this.bits = bits;
         return this;
     }
@@ -41,7 +41,7 @@ public class KeyPairBuilder {
      *
      * @return This instance of KeyPairBuilder for method chaining.
      */
-    public KeyPairBuilder certainty(int certainty) {
+    public Paillier_KeyPairBuilder certainty(int certainty) {
         this.certainty = certainty;
         return this;
     }
@@ -60,7 +60,7 @@ public class KeyPairBuilder {
      *            {@link SecureRandom}.
      * @return This instance of KeyPairBuilder for method chaining.
      */
-    public KeyPairBuilder randomNumberGenerator(Random rng) {
+    public Paillier_KeyPairBuilder randomNumberGenerator(Random rng) {
         this.rng = rng;
         return this;
     }
@@ -74,7 +74,7 @@ public class KeyPairBuilder {
      * @param b The upper bound.
      * @return This instance of KeyPairBuilder for method chaining.
      */
-    public KeyPairBuilder upperBound(BigInteger b) {
+    public Paillier_KeyPairBuilder upperBound(BigInteger b) {
         this.upperBound = b;
         return this;
     }
@@ -84,7 +84,7 @@ public class KeyPairBuilder {
      *
      * @return The pair of associated public and private keys.
      */
-    public KeyPair generateKeyPair() {
+    public Paillier_KeyPair generateKeyPair() {
         if (rng == null) {
             rng = new SecureRandom();
         }
@@ -116,10 +116,10 @@ public class KeyPairBuilder {
 
         } while (!helper.gcd(n).equals(BigInteger.ONE));
 
-        PublicKey publicKey = new PublicKey(n, nSquared, g, bits);
-        PrivateKey privateKey = new PrivateKey(lambda, helper.modInverse(n));
+        Paillier_PublicKey publicKey = new Paillier_PublicKey(n, nSquared, g, bits);
+        Paillier_PrivateKey privateKey = new Paillier_PrivateKey(lambda, helper.modInverse(n));
 
-        return new KeyPair(privateKey, publicKey, upperBound);
+        return new Paillier_KeyPair(privateKey, publicKey, upperBound);
 
     }
 

@@ -15,13 +15,13 @@ public class KeyPairIntegerTest {
     final int BITS = 1024;
     final int BITS_INTEGER = Type.BIGINT_LEN; // 40
 
-    private KeyPairBuilder keygen;
-    private KeyPair keypair;
-    private PublicKey publicKey;
+    private Paillier_KeyPairBuilder keygen;
+    private Paillier_KeyPair keypair;
+    private Paillier_PublicKey publicKey;
 
     @Before
     public void init() {
-        this.keygen = new KeyPairBuilder();
+        this.keygen = new Paillier_KeyPairBuilder();
         keygen.upperBound(BigInteger.valueOf(Integer.MAX_VALUE));
 //        keygen.upperBound(BigInteger.valueOf(1000000));
         keygen.bits(BITS_INTEGER);
@@ -45,7 +45,7 @@ public class KeyPairIntegerTest {
 
     @Test
     public void testCalculationOfGOfG() {
-        PrivateKey privateKey = keypair.getPrivateKey();
+        Paillier_PrivateKey privateKey = keypair.getPrivateKey();
 
         BigInteger n = publicKey.getN();
         BigInteger nSquared = publicKey.getnSquared();

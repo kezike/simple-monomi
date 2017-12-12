@@ -11,12 +11,12 @@ import org.junit.Test;
 
 public class JPaillierTest {
 
-    private KeyPair keyPair;
-    PublicKey publicKey;
+    private Paillier_KeyPair keyPair;
+    Paillier_PublicKey publicKey;
 
     @Before
     public void init() {
-        KeyPairBuilder keygen = new KeyPairBuilder();
+        Paillier_KeyPairBuilder keygen = new Paillier_KeyPairBuilder();
         keyPair = keygen.generateKeyPair();
         publicKey = keyPair.getPublicKey();
     }

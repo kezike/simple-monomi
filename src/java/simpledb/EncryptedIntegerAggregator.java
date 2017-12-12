@@ -27,7 +27,7 @@ public class EncryptedIntegerAggregator implements EncryptedAggregator {
     private int N;
     private int N2;
     private int G;
-    PublicKey publicKey;
+    Paillier_PublicKey publicKey;
     
     /**
      * Aggregate constructor
@@ -63,7 +63,7 @@ public class EncryptedIntegerAggregator implements EncryptedAggregator {
         this.N2 = N*N;
         this.G = ((IntField) t.getField(gIndex)).getValue();
         this.publicKey = 
-                new PublicKey(BigInteger.valueOf(N), BigInteger.valueOf(N2), 
+                new Paillier_PublicKey(BigInteger.valueOf(N), BigInteger.valueOf(N2), 
                               BigInteger.valueOf(G), HeapFile.BITS_INTEGER);
     }
 
