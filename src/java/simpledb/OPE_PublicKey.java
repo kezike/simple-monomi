@@ -8,14 +8,14 @@ import java.util.Random;
  * 
  */
 public class OPE_PublicKey {
-    private OPE ope;
+    private OPE_CipherPublic cipher;
 
-    OPE_PublicKey(OPE ope) {
-        this.ope = ope;
+    OPE_PublicKey(OPE_CipherPublic cipher) {
+        this.cipher = cipher;
     }
 
-    public OPE getOPE() {
-        return this.ope;
+    public OPE_CipherPublic getCipher() {
+        return this.cipher;
     }
 
     /**
@@ -25,6 +25,6 @@ public class OPE_PublicKey {
      * @return The corresponding ciphertext.
      */
     public final Integer encrypt(Integer val) {
-        return this.ope.encrypt(val);
+        return this.cipher.encrypt(val);
     }
 }

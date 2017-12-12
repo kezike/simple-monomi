@@ -49,15 +49,15 @@ public class OPE {
         }
     }
     
-    private OPE_Cipher cipher;
+    // private OPE_Cipher cipher;
     private OPE_Node ope_node;
-    private ConcurrentHashMap<Integer, Integer> encryption_map;
-    private ConcurrentHashMap<Integer, Integer> decryption_map;
+    // private ConcurrentHashMap<Integer, Integer> encryption_map;
+    // private ConcurrentHashMap<Integer, Integer> decryption_map;
 
-    public OPE(OPE_Cipher cipher) {
-        this.cipher = cipher;
+    public OPE(/*OPE_Cipher cipher*/) {
+        // this.cipher = cipher;
         this.ope_node = new OPE_Node();
-        this.encryption_map = new ConcurrentHashMap<Integer, Integer>();
+        // this.encryption_map = new ConcurrentHashMap<Integer, Integer>();
     }
     
     private ArrayList<Integer> sort(HeapFile hf, int col) throws DbException, TransactionAbortedException {
@@ -79,13 +79,13 @@ public class OPE {
         return values_list;
     }
 
-    public Integer encrypt(Integer val) {
+    /*public Integer encrypt(Integer val) {
         return this.cipher.encrypt(val);
     }
 
     public Integer decrypt(Integer val) {
         return this.cipher.decrypt(val);
-    }
+    }*/
     
     private OPE_Node buildOPETree(ArrayList<Integer> values, int start_idx, int end_idx) {
         if (start_idx > end_idx) {
@@ -101,11 +101,15 @@ public class OPE {
         return node;
     }
 
-    public OPE_Node encrypt(HeapFile file, int col) throws DbException, TransactionAbortedException {
+    public OPE_Node encrypt(HeapFile file, int col, OPE_CipherPublic cipher) throws DbException, TransactionAbortedException {
         ArrayList<Integer> values = this.sort(file, col);
+        ArrayList<Integer> values_enc = new ArrayList<Integer>();
+        for (Integer value : values) {
+          values_enc.add(cipher.encrypt(value));
+        }
         int start_idx = 0;
         int end_idx = values.size() - 1;
-        OPE_Node root = this.buildOPETree(values, start_idx, end_idx);
+        OPE_Node root = this.buildOPETree(values_enc, start_idx, end_idx);
         return root;
     }
 }

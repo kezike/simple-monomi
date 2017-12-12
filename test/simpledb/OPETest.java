@@ -10,15 +10,19 @@ import junit.framework.JUnit4TestAdapter;
 import java.io.File;
 
 public class OPETest {
-    private OPE_Cipher.Add add_15;
-    private OPE_Cipher.Sub sub_3;
-    private OPE_Cipher.Mult mult_7;
-    private OPE_Cipher.Line line_3_1;
+    private OPE_CipherPublic.Add add_15_pub;
+    private OPE_CipherPrivate.Add add_15_priv;
+    private OPE_CipherPublic.Sub sub_3_pub;
+    private OPE_CipherPrivate.Sub sub_3_priv;
+    private OPE_CipherPublic.Mult mult_7_pub;
+    private OPE_CipherPrivate.Mult mult_7_priv;
+    private OPE_CipherPublic.Line line_3_1_pub;
+    private OPE_CipherPrivate.Line line_3_1_priv;
 
-    private OPE ope_add_15;
-    private OPE ope_sub_3;
-    private OPE ope_mult_7;
-    private OPE ope_line_3_1;
+    // private OPE ope_add_15;
+    // private OPE ope_sub_3;
+    // private OPE ope_mult_7;
+    // private OPE ope_line_3_1;
 
     private HeapFile table;
     private DbFileIterator table_iter;
@@ -28,15 +32,19 @@ public class OPETest {
      */
     @Before
     public void setupOPETest() throws Exception {
-        this.add_15 = new OPE_Cipher.Add(15);
-        this.sub_3 = new OPE_Cipher.Sub(3);
-        this.mult_7 = new OPE_Cipher.Mult(7);
-        this.line_3_1 = new OPE_Cipher.Line(3, 1);
+        this.add_15_pub = new OPE_CipherPublic.Add(15);
+        this.add_15_priv = new OPE_CipherPrivate.Add(15);
+        this.sub_3_pub = new OPE_CipherPublic.Sub(3);
+        this.sub_3_priv = new OPE_CipherPrivate.Sub(3);
+        this.mult_7_pub = new OPE_CipherPublic.Mult(7);
+        this.mult_7_priv = new OPE_CipherPrivate.Mult(7);
+        this.line_3_1_pub = new OPE_CipherPublic.Line(3, 1);
+        this.line_3_1_priv = new OPE_CipherPrivate.Line(3, 1);
 
-        this.ope_add_15 = new OPE(add_15);
-        this.ope_sub_3 = new OPE(sub_3);
-        this.ope_mult_7 = new OPE(mult_7);
-        this.ope_line_3_1 = new OPE(line_3_1);
+        // this.ope_add_15 = new OPE(add_15);
+        // this.ope_sub_3 = new OPE(sub_3);
+        // this.ope_mult_7 = new OPE(mult_7);
+        // this.ope_line_3_1 = new OPE(line_3_1);
 
         Type types[] = new Type[]{ Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE };
         String names[] = new String[]{ "field0", "field1", "field2" };
@@ -49,9 +57,9 @@ public class OPETest {
 
     @Test
     public void testOPEAdd() throws DbException, TransactionAbortedException {
-        OPE_PrivateKey priv_key = new OPE_PrivateKey(this.ope_add_15);
-        OPE_PublicKey pub_key = new OPE_PublicKey(this.ope_add_15);
-        OPE_KeyPair key_pair = new OPE_KeyPair(priv_key, pub_key, this.ope_add_15);
+        OPE_PublicKey pub_key = new OPE_PublicKey(this.add_15_pub);
+        OPE_PrivateKey priv_key = new OPE_PrivateKey(this.add_15_priv);
+        OPE_KeyPair key_pair = new OPE_KeyPair(priv_key, pub_key);
         this.table_iter.open();
         while (this.table_iter.hasNext()) {
           Tuple tuple = this.table_iter.next();
@@ -76,9 +84,9 @@ public class OPETest {
 
     @Test
     public void testOPESub() throws DbException, TransactionAbortedException {
-        OPE_PrivateKey priv_key = new OPE_PrivateKey(this.ope_sub_3);
-        OPE_PublicKey pub_key = new OPE_PublicKey(this.ope_sub_3);
-        OPE_KeyPair key_pair = new OPE_KeyPair(priv_key, pub_key, this.ope_sub_3);
+        OPE_PublicKey pub_key = new OPE_PublicKey(this.sub_3_pub);
+        OPE_PrivateKey priv_key = new OPE_PrivateKey(this.sub_3_priv);
+        OPE_KeyPair key_pair = new OPE_KeyPair(priv_key, pub_key);
         this.table_iter.open();
         while (this.table_iter.hasNext()) {
           Tuple tuple = this.table_iter.next();
@@ -103,9 +111,9 @@ public class OPETest {
 
     @Test
     public void testOPEMult() throws DbException, TransactionAbortedException {
-        OPE_PrivateKey priv_key = new OPE_PrivateKey(this.ope_mult_7);
-        OPE_PublicKey pub_key = new OPE_PublicKey(this.ope_mult_7);
-        OPE_KeyPair key_pair = new OPE_KeyPair(priv_key, pub_key, this.ope_mult_7);
+        OPE_PublicKey pub_key = new OPE_PublicKey(this.mult_7_pub);
+        OPE_PrivateKey priv_key = new OPE_PrivateKey(this.mult_7_priv);
+        OPE_KeyPair key_pair = new OPE_KeyPair(priv_key, pub_key);
         this.table_iter.open();
         while (this.table_iter.hasNext()) {
           Tuple tuple = this.table_iter.next();
@@ -130,9 +138,9 @@ public class OPETest {
 
     @Test
     public void testOPELine() throws DbException, TransactionAbortedException {
-        OPE_PrivateKey priv_key = new OPE_PrivateKey(this.ope_line_3_1);
-        OPE_PublicKey pub_key = new OPE_PublicKey(this.ope_line_3_1);
-        OPE_KeyPair key_pair = new OPE_KeyPair(priv_key, pub_key, this.ope_line_3_1);
+        OPE_PublicKey pub_key = new OPE_PublicKey(this.line_3_1_pub);
+        OPE_PrivateKey priv_key = new OPE_PrivateKey(this.line_3_1_priv);
+        OPE_KeyPair key_pair = new OPE_KeyPair(priv_key, pub_key);
         this.table_iter.open();
         while (this.table_iter.hasNext()) {
           Tuple tuple = this.table_iter.next();
