@@ -149,8 +149,8 @@ public class HeapFile implements DbFile {
         Paillier_KeyPair paillerKeyPair = paillierKeyGen.generateKeyPair();
         Paillier_PublicKey paillierPublicKey = paillerKeyPair.getPublicKey();
         Paillier_PrivateKey paillierPrivateKey = paillerKeyPair.getPrivateKey();
-        OPE_CipherPrivate opeCipherPrivate = new OPE_CipherPrivate.Add(BigInteger.valueOf(5));
-        OPE_CipherPublic opeCipherPublic = new OPE_CipherPublic.Add(BigInteger.valueOf(5));
+        OPE_CipherPrivate opeCipherPrivate = new OPE_CipherPrivate.Mult(BigInteger.valueOf(5));
+        OPE_CipherPublic opeCipherPublic = new OPE_CipherPublic.Mult(BigInteger.valueOf(5));
         OPE_PrivateKey opePrivateKey = new OPE_PrivateKey(opeCipherPrivate);
         OPE_PublicKey opePublicKey = new OPE_PublicKey(opeCipherPublic);
         OPE_KeyPair opeKeyPair = new OPE_KeyPair(opePrivateKey, opePublicKey);
@@ -239,9 +239,9 @@ public class HeapFile implements DbFile {
         this.publicKey.put(PAILLIER_PREFIX, paillierPublicKey);
         this.privateKey.put(PAILLIER_PREFIX, paillierPrivateKey);
         
-        System.out.println("Paillier Public Key: " + paillierPublicKey);
-        System.out.println("Public Key: " + this.publicKey.toString());
-        System.out.println("Private Key: " + this.privateKey.toString());
+        // System.out.println("Paillier Public Key: " + paillierPublicKey);
+        // System.out.println("Public Key: " + this.publicKey.toString());
+        // System.out.println("Private Key: " + this.privateKey.toString());
 
         // Create new OPE KeyPair for the whole table
         // TODO: PUT encryption keys somewhere
@@ -276,19 +276,19 @@ public class HeapFile implements DbFile {
                 
                 BigIntField encryptedField = new BigIntField(encryptedData); // TODO: Change
                 encTuple.setField(j, encryptedField);
-                System.out.println("Encrypted " + plainData + " to " + encryptedData + " with Paillier");
+                // System.out.println("Encrypted " + plainData + " to " + encryptedData + " with Paillier");
             }
             i++;
             // OPE Encryption
             for (int j = 0; j < origNumFields; j++) {
-            	System.out.println("originalTuple: " + originalTuple);
-            	System.out.println("originalField: " + originalTuple.getField(j));
+            	// System.out.println("originalTuple: " + originalTuple);
+            	// System.out.println("originalField: " + originalTuple.getField(j));
                 Integer fieldValue = ((IntField) originalTuple.getField(j)).getValue();
                 BigInteger plainData = BigInteger.valueOf((long) fieldValue);
                 BigInteger encryptedData = opePublicKey.encrypt(plainData);
                 IntField encryptedField = new IntField(encryptedData.intValue()); // TODO: Change
                 encTuple.setField(i * origNumFields + j, encryptedField);
-                System.out.println("Encrypted " + plainData + " to " + encryptedData + " with OPE");
+                // System.out.println("Encrypted " + plainData + " to " + encryptedData + " with OPE");
             }
             
             // Save public key values
@@ -371,9 +371,9 @@ public class HeapFile implements DbFile {
         this.publicKey.put(PAILLIER_PREFIX, paillierPublicKey);
         this.privateKey.put(PAILLIER_PREFIX, paillierPrivateKey);
         
-        System.out.println("Paillier Public Key: " + paillierPublicKey);
-        System.out.println("Public Key: " + this.publicKey.toString());
-        System.out.println("Private Key: " + this.privateKey.toString());
+        // System.out.println("Paillier Public Key: " + paillierPublicKey);
+        // System.out.println("Public Key: " + this.publicKey.toString());
+        // System.out.println("Private Key: " + this.privateKey.toString());
 
         // Create new OPE KeyPair for the whole table
         // TODO: PUT encryption keys somewhere
@@ -409,7 +409,7 @@ public class HeapFile implements DbFile {
     	                
     	                BigIntField encryptedField = new BigIntField(encryptedData); // TODO: Change
     	                encTuple.setField(j, encryptedField);
-    	                System.out.println("Encrypted " + plainData + " to " + encryptedData + " with Paillier");
+    	                // System.out.println("Encrypted " + plainData + " to " + encryptedData + " with Paillier");
     	            }
     	            i++;
     	            
@@ -425,14 +425,14 @@ public class HeapFile implements DbFile {
     	            int i = 0;
     	            // OPE Encryption
         			for (int j = 0; j < origNumFields; j++) {
-        				System.out.println("originalTuple: " + originalTuple);
-        				System.out.println("originalField: " + originalTuple.getField(j));
+        				// System.out.println("originalTuple: " + originalTuple);
+        				// System.out.println("originalField: " + originalTuple.getField(j));
         				Integer fieldValue = ((IntField) originalTuple.getField(j)).getValue();
         				BigInteger plainData = BigInteger.valueOf((long) fieldValue);
         				BigInteger encryptedData = opePublicKey.encrypt(plainData);
         				IntField encryptedField = new IntField(encryptedData.intValue()); // TODO: Change
         				encTuple.setField(i * origNumFields + j, encryptedField);
-        				System.out.println("Encrypted " + plainData + " to " + encryptedData + " with OPE");
+        				// System.out.println("Encrypted " + plainData + " to " + encryptedData + " with OPE");
     	            }
     	            i++;
 
