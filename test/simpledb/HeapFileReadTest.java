@@ -171,16 +171,16 @@ public class HeapFileReadTest extends SimpleDbTestBase {
                 System.out.println("New priv: " + keyPairFromFile.getPrivateKey().toString());
                 
                 // now decrypt the first 2 columns which should be Paillier
-                int firstEncVal = ((IntField) encTup.getField(0)).getValue();
-                BigInteger firstEncNum = BigInteger.valueOf(firstEncVal);
-                BigInteger decrypted = keyPairFromFile.decrypt(firstEncNum);
+                BigInteger firstEncVal = ((BigIntField) encTup.getField(0)).getValue();
+                //BigInteger firstEncNum = BigInteger.valueOf(firstEncVal);
+                BigInteger decrypted = keyPairFromFile.decrypt(firstEncVal);
                 int firstOrigVal = ((IntField) tup.getField(0)).getValue();
                 System.out.println("Expected: " + firstOrigVal + " Actual: " + decrypted.toString());
                 assertEquals(BigInteger.valueOf(firstOrigVal), decrypted);
                 
-                int secondEncVal = ((IntField) encTup.getField(1)).getValue();
-                BigInteger secondNum = BigInteger.valueOf(secondEncVal);
-                decrypted = keyPairFromFile.decrypt(secondNum);
+//                BigInteger secondEncVal = ((BigIntField) encTup.getField(1)).getValue();
+//                BigInteger secondNum = BigInteger.valueOf(secondEncVal);
+//                decrypted = keyPairFromFile.decrypt(secondEncVal);
 //                System.out.println("Expected: " + secondNum + " Actual: " + decrypted.toString());
 //                assertEquals(BigInteger.valueOf(secondEncVal), decrypted);
                                 
