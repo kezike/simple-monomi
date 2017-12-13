@@ -9,12 +9,12 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 
-public class DecryptionTest {
+public class TimingTests {
     
     private HeapFile table;
 
     /**
-     * TODO: This test doesn't work now
+     * Initialize each OPE unit test
      */
     @Before
     public void setupEncryptionTest() {
@@ -27,7 +27,7 @@ public class DecryptionTest {
     }
 
     @Test
-    public void testEncrypt() throws IOException, DbException, TransactionAbortedException {
+    public void testPaillierEncryptTiming() throws IOException, DbException, TransactionAbortedException {
         ConcurrentHashMap<String, KeyPair> keyPairs = new ConcurrentHashMap<String, KeyPair>();
         
         Paillier_KeyPairBuilder paillierKeyGen = new Paillier_KeyPairBuilder();
@@ -43,13 +43,12 @@ public class DecryptionTest {
         
         keyPairs.put(HeapFile.PAILLIER_PREFIX, (KeyPair) paillerKeyPair);
         keyPairs.put(HeapFile.OPE_PREFIX, (KeyPair) opeKeyPair);
-        
-        HeapFile tableEnc = this.table.decrypt(keyPairs, HeapFile.PAILLIER_PREFIX);
+        EncryptedFile tableEnc = this.table.encrypt(keyPairs);
         TupleDesc tupDescEnc = tableEnc.getTupleDesc();
-        assertEquals((this.table.getTupleDesc().numFields() - HeapFile.NUM_EXTRA_COLUMNS)/HeapFile.NUM_ENCRYPTIONS, tupDescEnc.numFields());
+        assertEquals(this.table.getTupleDesc().numFields() * HeapFile.NUM_ENCRYPTIONS + HeapFile.NUM_EXTRA_COLUMNS, tupDescEnc.numFields());
         
-        DbFileIterator plainTableEncIter = tableEnc.iterator(new TransactionId());
-        DbFileIterator tableEncIter = this.table.iterator(new TransactionId());
+        DbFileIterator plainTableEncIter = this.table.iterator(new TransactionId());
+        DbFileIterator tableEncIter = tableEnc.iterator(new TransactionId());
         tableEncIter.open();
         plainTableEncIter.open();
         
