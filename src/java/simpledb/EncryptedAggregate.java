@@ -44,9 +44,9 @@ public class EncryptedAggregate extends Operator {
         this.tupDesc = this.child.getTupleDesc();
         Type gbFieldType;
         if (this.hasGrouping()) {
-        		gbFieldType = this.tupDesc.getFieldType(gbfield);
+          gbFieldType = this.tupDesc.getFieldType(gbfield);
         } else {
-        		gbFieldType = null;
+          gbFieldType = null;
         }
         Type aFieldType = this.tupDesc.getFieldType(afield);
         this.aggr = new EncryptedBigIntegerAggregator(gbfield, gbFieldType, afield, aop);

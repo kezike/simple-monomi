@@ -19,7 +19,7 @@ public class EncryptionTest {
     @Before
     public void setupEncryptionTest() {
         Type types[] = new Type[]{ Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE };
-        String names[] = new String[]{ "field0", "field1", "field2" };
+        String names[] = new String[]{ "a", "b", "c" };
         TupleDesc td = new TupleDesc(types, names);
         this.table = new HeapFile(new File("test/simpledb/ope_test.dat"), td);
         Catalog catalog = Database.getCatalog();
