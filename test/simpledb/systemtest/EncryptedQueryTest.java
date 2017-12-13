@@ -44,12 +44,12 @@ public class EncryptedQueryTest {
         this.keyPairs.put(HeapFile.PAILLIER_PREFIX, (KeyPair) this.paillerKeyPair);
         this.keyPairs.put(HeapFile.OPE_PREFIX, (KeyPair) this.opeKeyPair);
     	
-    	// construct a 3-column table schema
+    	// Construct a 3-column table schema
         Type types[] = new Type[]{ Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE };
         String names[] = new String[]{ "a", "b", "c" };
         TupleDesc td = new TupleDesc(types, names);
 
-        // create the table, associate it with some_data_file.dat
+        // Create the table, associate it with some_data_file.dat
         // and tell the catalog about the schema of this table.
         this.table = new HeapFile(new File("test/simpledb/end_to_end_enc_test.dat"), td);
         Catalog catalog = Database.getCatalog();
@@ -58,20 +58,38 @@ public class EncryptedQueryTest {
         this.tableEnc = this.table.encrypt(this.keyPairs);
         catalog.addTable(this.tableEnc, "end_to_end_enc_test_enc");
     }
-
-    @Test public void testEndToEndMax() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
-        // construct the query
+    
+    @Test
+    public void testEndToEndMax() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
+        // Construct the query
         TransactionId tid = new TransactionId();
         SeqScan seqScan = new SeqScan(tid, this.tableEnc.getId());
-        int fieldIdx = this.tableEnc.getTupleDesc().fieldNameToIndex(HeapFile.OPE_PREFIX + "b");
+        String col = "b";
+        int fieldIdx = this.tableEnc.getTupleDesc().fieldNameToIndex(HeapFile.OPE_PREFIX + col);
         EncryptedAggregate max = new EncryptedAggregate(seqScan, fieldIdx, Aggregator.NO_GROUPING, EncryptedAggregator.EncOp.OPE_MAX);
         Tuple tupleMax;
-        //try {
         max.open();
         tupleMax = max.next();
-        System.out.println("OPE_MAX(b): " + tupleMax);
+        System.out.println(HeapFile.OPE_PREFIX + "MAX(" + col + "): " + tupleMax);
         max.close();
         Database.getBufferPool().transactionComplete(tid);
-        System.out.println("MAX(b): " + this.opePrivateKey.decrypt(BigInteger.valueOf(((IntField)tupleMax.getField(0)).getValue())));
+        System.out.println("MAX(" + col + "): " + this.opePrivateKey.decrypt(BigInteger.valueOf(((IntField) tupleMax.getField(0)).getValue())) + '\n');
+    }
+    
+    @Test
+    public void testEndToEndMin() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
+        // Construct the query
+        TransactionId tid = new TransactionId();
+        SeqScan seqScan = new SeqScan(tid, this.tableEnc.getId());
+        String col = "c";
+        int fieldIdx = this.tableEnc.getTupleDesc().fieldNameToIndex(HeapFile.OPE_PREFIX + col);
+        EncryptedAggregate min = new EncryptedAggregate(seqScan, fieldIdx, Aggregator.NO_GROUPING, EncryptedAggregator.EncOp.OPE_MIN);
+        Tuple tupleMin;
+        min.open();
+        tupleMin = min.next();
+        System.out.println(HeapFile.OPE_PREFIX + "MIN(" + col + "): " + tupleMin);
+        min.close();
+        Database.getBufferPool().transactionComplete(tid);
+        System.out.println("MIN(" + col + "): " + this.opePrivateKey.decrypt(BigInteger.valueOf(((IntField) tupleMin.getField(0)).getValue())) + '\n');
     }
 }

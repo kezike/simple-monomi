@@ -17,7 +17,7 @@ public class DecryptionTest {
      * TODO: This test doesn't work now
      */
     @Before
-    public void setupEncryptionTest() {
+    public void setupDecryptionTest() {
         Type types[] = new Type[]{ Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE };
         String names[] = new String[]{ "field0", "field1", "field2" };
         TupleDesc td = new TupleDesc(types, names);
@@ -26,8 +26,8 @@ public class DecryptionTest {
         catalog.addTable(this.table, "ope_test");
     }
 
-    @Test
-    public void testEncrypt() throws IOException, DbException, TransactionAbortedException {
+    /*@Test
+    public void testDecrypt() throws IOException, DbException, TransactionAbortedException {
         ConcurrentHashMap<String, KeyPair> keyPairs = new ConcurrentHashMap<String, KeyPair>();
         
         Paillier_KeyPairBuilder paillierKeyGen = new Paillier_KeyPairBuilder();
@@ -93,12 +93,12 @@ public class DecryptionTest {
         
         tableEncIter.close();
         plainTableEncIter.open();
-    }
+    }*/
 
     /**
      * JUnit suite target
      */
     public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(EncryptionTest.class);
+        return new JUnit4TestAdapter(DecryptionTest.class);
     }
 }

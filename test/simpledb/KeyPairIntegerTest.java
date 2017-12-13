@@ -13,7 +13,7 @@ import org.junit.Test;
 public class KeyPairIntegerTest {
 
     final int BITS = 1024;
-    final int BITS_INTEGER = Type.BIGINT_LEN; // 40
+    final int BITS_INTEGER = 40; // TODO: Should be Type.BIGINT_LEN
 
     private Paillier_KeyPairBuilder keygen;
     private Paillier_KeyPair keypair;

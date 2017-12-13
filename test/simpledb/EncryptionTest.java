@@ -324,10 +324,10 @@ public class EncryptionTest {
         encryptNRowsMColumns(20,20);   
     }
 
-    @Test
+    /*@Test
     public void test100r100c() throws Exception{
         encryptNRowsMColumns(100,100);   
-    }
+    }*/
     
     /*@Test
     public void test1000r100c() throws Exception{
