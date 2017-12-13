@@ -41,6 +41,7 @@ public class OPETest {
         String names[] = new String[]{ "field0", "field1", "field2" };
         TupleDesc td = new TupleDesc(types, names);
         this.table = new HeapFile(new File("test/simpledb/ope_test.dat"), td);
+
         Catalog catalog = Database.getCatalog();
         catalog.addTable(this.table, "ope_test");
         this.table_iter = this.table.iterator(new TransactionId());

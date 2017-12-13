@@ -1,56 +1,104 @@
 package simpledb;
 
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collection;
-
 import static org.junit.Assert.assertEquals;
+import junit.framework.JUnit4TestAdapter;
+import java.util.concurrent.ConcurrentHashMap;
+import java.io.File;
+import java.io.IOException;
+import java.math.BigInteger;
 
-/**
- * Created by kunerd on 22.09.15.
- */
-@RunWith(value = Parameterized.class)
 public class DecryptionTest {
+    
+    private HeapFile table;
 
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                createTestParameter(Long.MIN_VALUE),
-                createTestParameter(Integer.MIN_VALUE),
-                createTestParameter(Short.MIN_VALUE),
-                createTestParameter(0),
-                createTestParameter(Short.MAX_VALUE),
-                createTestParameter(Integer.MAX_VALUE),
-                createTestParameter(Long.MAX_VALUE)
-        });
-    }
-
-    private BigInteger input;
-    private BigInteger expected;
-
-    public DecryptionTest(BigInteger input, BigInteger expected) {
-        this.input = input;
-        this.expected = expected;
+    /**
+     * Initialize each OPE unit test
+     */
+    @Before
+    public void setupEncryptionTest() {
+        Type types[] = new Type[]{ Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE };
+        String names[] = new String[]{ "field0", "field1", "field2" };
+        TupleDesc td = new TupleDesc(types, names);
+        this.table = new HeapFile(new File("test/simpledb/ope_test.dat"), td);
+        Catalog catalog = Database.getCatalog();
+        catalog.addTable(this.table, "ope_test");
     }
 
     @Test
-    public void test() {
-        Paillier_KeyPair keyPair = new Paillier_KeyPairBuilder().upperBound(BigInteger.valueOf(Long.MAX_VALUE))
-                .generateKeyPair();
-        Paillier_PublicKey publicKey = keyPair.getPublicKey();
-
-        BigInteger encryptedData = publicKey.encrypt(input);
-
-        assertEquals(expected, keyPair.decrypt(encryptedData));
+    public void testEncrypt() throws IOException, DbException, TransactionAbortedException {
+        ConcurrentHashMap<String, KeyPair> keyPairs = new ConcurrentHashMap<String, KeyPair>();
+        
+        Paillier_KeyPairBuilder paillierKeyGen = new Paillier_KeyPairBuilder();
+        paillierKeyGen.upperBound(BigInteger.valueOf(Integer.MAX_VALUE));
+        paillierKeyGen.bits(HeapFile.BITS_INTEGER);
+        Paillier_KeyPair paillerKeyPair = paillierKeyGen.generateKeyPair();
+        
+        OPE_CipherPrivate opeCipherPrivate = new OPE_CipherPrivate.Mult(BigInteger.valueOf(5));
+        OPE_CipherPublic opeCipherPublic = new OPE_CipherPublic.Mult(BigInteger.valueOf(5));
+        OPE_PrivateKey opePrivateKey = new OPE_PrivateKey(opeCipherPrivate);
+        OPE_PublicKey opePublicKey = new OPE_PublicKey(opeCipherPublic);
+        OPE_KeyPair opeKeyPair = new OPE_KeyPair(opePrivateKey, opePublicKey);
+        
+        keyPairs.put(HeapFile.PAILLIER_PREFIX, (KeyPair) paillerKeyPair);
+        keyPairs.put(HeapFile.OPE_PREFIX, (KeyPair) opeKeyPair);
+        
+        HeapFile tableEnc = this.table.decrypt(keyPairs, HeapFile.PAILLIER_PREFIX);
+        TupleDesc tupDescEnc = tableEnc.getTupleDesc();
+        assertEquals((this.table.getTupleDesc().numFields() - HeapFile.NUM_EXTRA_COLUMNS)/HeapFile.NUM_ENCRYPTIONS, tupDescEnc.numFields());
+        
+        DbFileIterator plainTableEncIter = tableEnc.iterator(new TransactionId());
+        DbFileIterator tableEncIter = this.table.iterator(new TransactionId());
+        tableEncIter.open();
+        plainTableEncIter.open();
+        
+        Tuple tupleEnc;
+        Tuple tuplePlain;
+        // Testing first-row encrypted values
+        tupleEnc = tableEncIter.next();
+        tuplePlain = plainTableEncIter.next();
+        // Paillier values        
+        assertEquals(((IntField) tuplePlain.getField(0)).getValue(), paillerKeyPair.decrypt(((BigIntField) tupleEnc.getField(0)).getValue()).intValue());
+        assertEquals(((IntField) tuplePlain.getField(1)).getValue(), paillerKeyPair.decrypt(((BigIntField) tupleEnc.getField(1)).getValue()).intValue());
+        assertEquals(((IntField) tuplePlain.getField(2)).getValue(), paillerKeyPair.decrypt(((BigIntField) tupleEnc.getField(2)).getValue()).intValue());
+        // OPE values
+        assertEquals(20, ((IntField) tupleEnc.getField(3)).getValue());
+        assertEquals(50, ((IntField) tupleEnc.getField(4)).getValue());
+        assertEquals(30, ((IntField) tupleEnc.getField(5)).getValue());
+        
+        // Testing second-row encrypted values
+        tupleEnc = tableEncIter.next();
+        tuplePlain = plainTableEncIter.next();
+        // Paillier values
+        assertEquals(((IntField) tuplePlain.getField(0)).getValue(), paillerKeyPair.decrypt(((BigIntField) tupleEnc.getField(0)).getValue()).intValue());
+        assertEquals(((IntField) tuplePlain.getField(1)).getValue(), paillerKeyPair.decrypt(((BigIntField) tupleEnc.getField(1)).getValue()).intValue());
+        assertEquals(((IntField) tuplePlain.getField(2)).getValue(), paillerKeyPair.decrypt(((BigIntField) tupleEnc.getField(2)).getValue()).intValue());
+        // OPE values
+        assertEquals(35, ((IntField) tupleEnc.getField(3)).getValue());
+        assertEquals(5, ((IntField) tupleEnc.getField(4)).getValue());
+        assertEquals(75, ((IntField) tupleEnc.getField(5)).getValue());
+        
+        // Testing third-row encrypted values
+        tupleEnc = tableEncIter.next();
+        tuplePlain = plainTableEncIter.next();
+        // Paillier values
+        assertEquals(((IntField) tuplePlain.getField(0)).getValue(), paillerKeyPair.decrypt(((BigIntField) tupleEnc.getField(0)).getValue()).intValue());
+        assertEquals(((IntField) tuplePlain.getField(1)).getValue(), paillerKeyPair.decrypt(((BigIntField) tupleEnc.getField(1)).getValue()).intValue());
+        assertEquals(((IntField) tuplePlain.getField(2)).getValue(), paillerKeyPair.decrypt(((BigIntField) tupleEnc.getField(2)).getValue()).intValue());
+        // OPE values
+        assertEquals(10, ((IntField) tupleEnc.getField(3)).getValue());
+        assertEquals(25, ((IntField) tupleEnc.getField(4)).getValue());
+        assertEquals(40, ((IntField) tupleEnc.getField(5)).getValue());
+        
+        tableEncIter.close();
+        plainTableEncIter.open();
     }
 
-    private static Object[] createTestParameter(long plaintext) {
-        BigInteger p = BigInteger.valueOf(plaintext);
-        return new Object[]{p, p};
+    /**
+     * JUnit suite target
+     */
+    public static junit.framework.Test suite() {
+        return new JUnit4TestAdapter(EncryptionTest.class);
     }
-
 }
