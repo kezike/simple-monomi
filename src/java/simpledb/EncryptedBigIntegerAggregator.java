@@ -7,14 +7,14 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Knows how to compute some aggregate over a set of encrypted IntFields.
  */
-public class EncryptedIntegerAggregator implements EncryptedAggregator {
+public class EncryptedBigIntegerAggregator implements Aggregator {
 
     private static final long serialVersionUID = 1L;
 
     private final int gbfield;
     private final Type gbfieldtype;
     private final int afield;
-    private final EncOp op;
+    private final Op op;
     private final ArrayList<Tuple> results = new ArrayList<Tuple>();
     private final ConcurrentHashMap<Field, BigInteger> gbValues = 
             new ConcurrentHashMap<Field, BigInteger>();
@@ -47,7 +47,7 @@ public class EncryptedIntegerAggregator implements EncryptedAggregator {
      * then hand this to the client to decrypt with the appropriate KeyPair
      */
 
-    public EncryptedIntegerAggregator(int gbfield, Type gbfieldtype, int afield, EncOp what) {
+    public EncryptedBigIntegerAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
         this.gbfield = gbfield;
         this.gbfieldtype = gbfieldtype;
         this.afield = afield;
@@ -145,7 +145,7 @@ public class EncryptedIntegerAggregator implements EncryptedAggregator {
             BigInteger value = (BigInteger) gbValues.get(new IntField(gbfield));
             
             // Multiply by one over count to divide TODO: Test that this works
-            if (op.equals(EncOp.PAILLIER_AVG)) {
+            if (op.equals(Op.PAILLIER_AVG)) {
                 value = Paillier.constMult(value, BigInteger.ONE.divide(avgCount.get(gb)), publicKey);
             }
             t.setField(0, new IntField(value.intValueExact()));
@@ -160,7 +160,7 @@ public class EncryptedIntegerAggregator implements EncryptedAggregator {
                 BigInteger value = gbValues.get(gb);
 
                 // TODO: Make sure this still works with Paillier
-                if (op.equals(EncOp.PAILLIER_AVG)) {
+                if (op.equals(Op.PAILLIER_AVG)) {
                     value = Paillier.constMult(value, BigInteger.ONE.divide(avgCount.get(gb)), publicKey);
                 }
                 t.setField(0, gb);
