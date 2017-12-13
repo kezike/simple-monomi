@@ -16,6 +16,7 @@ public interface Aggregator extends Serializable {
      * */
     public enum Op implements Serializable {
         MIN, MAX, SUM, AVG, COUNT,
+        OPE_MIN, OPE_MAX, PAILLIER_SUM, PAILLIER_AVG, // Encryptor operations
         /**
          * SUM_COUNT: compute sum and count simultaneously, will be
          * needed to compute distributed avg in lab7.

@@ -49,15 +49,17 @@ public class Aggregate extends Operator {
         this.tupDesc = this.child.getTupleDesc();
         Type gbFieldType;
         if (this.hasGrouping()) {
-          gbFieldType = this.tupDesc.getFieldType(gbfield);
+        		gbFieldType = this.tupDesc.getFieldType(gbfield);
         } else {
-          gbFieldType = null;
+        		gbFieldType = null;
         }
         Type aFieldType = this.tupDesc.getFieldType(afield);
         if (aFieldType == Type.INT_TYPE) {
-          this.aggr = new IntegerAggregator(gbfield, gbFieldType, afield, aop);
-        } else {
-          this.aggr = new StringAggregator(gbfield, gbFieldType, afield, aop);
+        		this.aggr = new IntegerAggregator(gbfield, gbFieldType, afield, aop);
+        } else if (aFieldType == Type.STRING_TYPE) {
+        		this.aggr = new StringAggregator(gbfield, gbFieldType, afield, aop);
+        } else { // Encrypted case
+        	  	this.aggr = new EncryptedBigIntegerAggregator(gbfield, gbFieldType, afield, aop);
         }
         this.mergeAllTuples(child, this.aggr);
         this.aggrIter = this.aggr.iterator();
