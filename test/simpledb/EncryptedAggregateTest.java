@@ -87,7 +87,7 @@ public class EncryptedAggregateTest extends SimpleDbTestBase {
    */
   @Test public void getTupleDesc() {
     Aggregate op = new Aggregate(scan1, 0, 0,
-        EncryptedAggregator.Op.PAILLIER_SUM);
+        EncryptedAggregator.Op.MIN); // TODO: Change this
     TupleDesc expected = Utility.getTupleDesc(2);
     TupleDesc actual = op.getTupleDesc();
     assertEquals(expected, actual);

@@ -237,6 +237,10 @@ public class HeapFile implements DbFile {
         Paillier_PrivateKey paillierPrivateKey = paillierKeyPair.getPrivateKey();
         this.publicKey.put(PAILLIER_PREFIX, paillierPublicKey);
         this.privateKey.put(PAILLIER_PREFIX, paillierPrivateKey);
+        
+        System.out.println("Paillier Public Key: " + paillierPublicKey);
+        System.out.println("Public Key: " + this.publicKey.toString());
+        System.out.println("Private Key: " + this.privateKey.toString());
 
         // Create new OPE KeyPair for the whole table
         // TODO: PUT encryption keys somewhere
@@ -247,10 +251,7 @@ public class HeapFile implements DbFile {
         this.privateKey.put(OPE_PREFIX, opePrivateKey);
         
         // TODO: This line is for testing only
-        System.out.println("Public Key: " + this.publicKey.toString());
-        System.out.println("Private Key: " + this.privateKey.toString());
-        
-        
+
         // TODO: Come up with convention for saving all the different private keys. Do we
         // want a file for each key, or one file with all the keys for the file
         saveKeyPair(keyPairs.get(PAILLIER_PREFIX), String.valueOf(getId()) + ".paillier");
@@ -266,8 +267,13 @@ public class HeapFile implements DbFile {
             for (int j = 0; j < origNumFields; j++) {
                 Integer fieldValue = ((IntField) originalTuple.getField(j)).getValue();
                 BigInteger plainData = BigInteger.valueOf((long) fieldValue);
+//                if (plainData.intValue() == 4) {
+//                		System.out.println("Public key for int value " + plainData.intValue() + " is " + paillierPublicKey);
+//                		System.out.println("Encrypted data is " + paillierPublicKey.encrypt(plainData));
+//                }
                 BigInteger encryptedData = paillierPublicKey.encrypt(plainData);
-	                IntField encryptedField = new IntField(encryptedData.intValue()); // TODO: Change
+                
+                BigIntField encryptedField = new BigIntField(encryptedData); // TODO: Change
                 encTuple.setField(j, encryptedField);
                 System.out.println("Encrypted " + plainData + " to " + encryptedData + " with Paillier");
             }
