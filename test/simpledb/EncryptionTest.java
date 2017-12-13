@@ -45,9 +45,28 @@ public class EncryptionTest {
         OPE_KeyPair opeKeyPair = new OPE_KeyPair(opePrivateKey, opePublicKey);
         keyPairs.put(HeapFile.PAILLIER_PREFIX, (KeyPair) paillerKeyPair);
         keyPairs.put(HeapFile.OPE_PREFIX, (KeyPair) opeKeyPair);
-        EncryptedFile encryptedFile = this.table.encrypt(keyPairs);
-        TupleDesc tupDescEnc = encryptedFile.getTupleDesc();
+        EncryptedFile tableEnc = this.table.encrypt(keyPairs);
+        TupleDesc tupDescEnc = tableEnc.getTupleDesc();
         assertEquals(this.table.getTupleDesc().numFields() * HeapFile.NUM_ENCRYPTIONS + HeapFile.NUM_EXTRA_COLUMNS, tupDescEnc.numFields());
+        DbFileIterator tableEncIter = tableEnc.iterator(new TransactionId());
+        tableEncIter.open();
+        Tuple tupleEnc;
+        // Testing first-row OPE values
+        tupleEnc = tableEncIter.next();
+        assertEquals(20, ((IntField) tupleEnc.getField(3)).getValue());
+        assertEquals(50, ((IntField) tupleEnc.getField(4)).getValue());
+        assertEquals(30, ((IntField) tupleEnc.getField(5)).getValue());
+        // Testing second-row OPE values
+        tupleEnc = tableEncIter.next();
+        assertEquals(35, ((IntField) tupleEnc.getField(3)).getValue());
+        assertEquals(5, ((IntField) tupleEnc.getField(4)).getValue());
+        assertEquals(75, ((IntField) tupleEnc.getField(5)).getValue());
+        // Testing third-row OPE values
+        tupleEnc = tableEncIter.next();
+        assertEquals(10, ((IntField) tupleEnc.getField(3)).getValue());
+        assertEquals(25, ((IntField) tupleEnc.getField(4)).getValue());
+        assertEquals(40, ((IntField) tupleEnc.getField(5)).getValue());
+        tableEncIter.close();
     }
 
     /**
