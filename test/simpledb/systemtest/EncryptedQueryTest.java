@@ -19,6 +19,7 @@ public class EncryptedQueryTest {
     private HeapFile table;
     private EncryptedFile tableEnc;
     private DbFileIterator tableIter;
+    private DbFileIterator tableEncIter;
     private ConcurrentHashMap<String, KeyPair> keyPairs;
     private Paillier_KeyPair paillerKeyPair;
     private OPE_PrivateKey opePrivateKey;
@@ -57,12 +58,30 @@ public class EncryptedQueryTest {
         this.tableIter = this.table.iterator(new TransactionId());
         this.tableEnc = this.table.encrypt(this.keyPairs);
         catalog.addTable(this.tableEnc, "end_to_end_enc_test_enc");
+        System.out.println("Original Table");
+        this.tableIter.open();
+        while (this.tableIter.hasNext()) {
+          Tuple tuple = this.tableIter.next();
+          System.out.println(tuple);
+        }
+        this.tableIter.close();
+        System.out.println("------------------------------------------------------------------------------------------------------------------------------------------------------");
+        this.tableEncIter = this.tableEnc.iterator(new TransactionId());
+        System.out.println("Encrypted Table");
+        this.tableEncIter.open();
+        while (this.tableEncIter.hasNext()) {
+          Tuple tupleEnc = this.tableEncIter.next();
+          System.out.println(tupleEnc);
+        }
+        this.tableEncIter.close();
+        System.out.println("------------------------------------------------------------------------------------------------------------------------------------------------------");
     }
     
     @Test
-    public void testEndToEndMax() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
+    public void testEndToEndOPEQueryMax() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
         // Construct the query
-        TransactionId tid = new TransactionId();
+        System.out.println("Query: SELECT OPE_MAX(b) FROM end_to_end_enc_test_enc");
+    	TransactionId tid = new TransactionId();
         SeqScan seqScan = new SeqScan(tid, this.tableEnc.getId());
         String col = "b";
         int fieldIdx = this.tableEnc.getTupleDesc().fieldNameToIndex(HeapFile.OPE_PREFIX + col);
@@ -74,11 +93,13 @@ public class EncryptedQueryTest {
         max.close();
         Database.getBufferPool().transactionComplete(tid);
         System.out.println("MAX(" + col + "): " + this.opePrivateKey.decrypt(BigInteger.valueOf(((IntField) tupleMax.getField(0)).getValue())) + '\n');
+        System.out.println("------------------------------------------------------------------------------------------------------------------------------------------------------");
     }
     
     @Test
-    public void testEndToEndMin() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
+    public void testEndToEndOPEQueryMin() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
         // Construct the query
+    	System.out.println("Query: SELECT OPE_MIN(c) FROM end_to_end_enc_test_enc");
         TransactionId tid = new TransactionId();
         SeqScan seqScan = new SeqScan(tid, this.tableEnc.getId());
         String col = "c";
