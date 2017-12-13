@@ -44,6 +44,7 @@ public class HeapFile implements DbFile {
     private TupleDesc tupDesc;
     private ConcurrentHashMap<String, PublicKey> publicKey;
     private ConcurrentHashMap<String, PrivateKey> privateKey;
+    private ConcurrentHashMap<String, KeyPair> defaultKeyPairs;
 
     /**
      * FileTupleIterator implements DbFileIterator
@@ -140,6 +141,20 @@ public class HeapFile implements DbFile {
         // some code goes here
         this.file = f;
         this.tupDesc = td;
+        this.defaultKeyPairs = new ConcurrentHashMap<String, KeyPair>();
+        Paillier_KeyPairBuilder paillierKeyGen = new Paillier_KeyPairBuilder();
+        paillierKeyGen.upperBound(BigInteger.valueOf(Integer.MAX_VALUE));
+        paillierKeyGen.bits(HeapFile.BITS_INTEGER);
+        Paillier_KeyPair paillerKeyPair = paillierKeyGen.generateKeyPair();
+        Paillier_PublicKey paillierPublicKey = paillerKeyPair.getPublicKey();
+        Paillier_PrivateKey paillierPrivateKey = paillerKeyPair.getPrivateKey();
+        OPE_CipherPrivate opeCipherPrivate = new OPE_CipherPrivate.Add(BigInteger.valueOf(5));
+        OPE_CipherPublic opeCipherPublic = new OPE_CipherPublic.Add(BigInteger.valueOf(5));
+        OPE_PrivateKey opePrivateKey = new OPE_PrivateKey(opeCipherPrivate);
+        OPE_PublicKey opePublicKey = new OPE_PublicKey(opeCipherPublic);
+        OPE_KeyPair opeKeyPair = new OPE_KeyPair(opePrivateKey, opePublicKey);
+        this.defaultKeyPairs.put(HeapFile.PAILLIER_PREFIX, (KeyPair) paillerKeyPair);
+        this.defaultKeyPairs.put(HeapFile.OPE_PREFIX, (KeyPair) opeKeyPair);
     }
     
     /**
@@ -150,8 +165,9 @@ public class HeapFile implements DbFile {
      * the modulus n of the Paillier public key.
      * @return An EncryptedFile that contains the encrypted contents of this HeapFile
      */
-    public EncryptedFile encrypt(ConcurrentHashMap<String, KeyPair> keyPairs) throws IOException, DbException, 
-                                          TransactionAbortedException {
+    public EncryptedFile encrypt(ConcurrentHashMap<String, KeyPair> keyPairs)
+        throws IOException, DbException, 
+        TransactionAbortedException {
         // TODO: Apply the relevant encryption schemes to each tuple in each page
         // essentially iterate through all the tuples and create a new encrypted table
         // that has twice the number of columns
@@ -280,6 +296,20 @@ public class HeapFile implements DbFile {
 
         hfi.close();
         return encF;
+    }
+
+    /**
+     * Takes the contents of this file and applies Paillier and Order-Preserving
+     * Encryption to all the fields. The resulting EncryptedFile will have two columns for
+     * each column in the original file, one for the Paillier Encryption and one for the
+     * Order-Preserving Encryption. The last column of the EncryptedFile will be 
+     * the modulus n of the Paillier public key.
+     * @return An EncryptedFile that contains the encrypted contents of this HeapFile
+     */
+    public EncryptedFile encrypt()
+        throws IOException, DbException, 
+        TransactionAbortedException {
+        return this.encrypt(this.defaultKeyPairs);
     }
 
     /**
