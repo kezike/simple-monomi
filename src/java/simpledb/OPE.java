@@ -50,15 +50,22 @@ public class OPE {
         }
     }
     
-    // private OPE_Cipher cipher;
     private OPE_Node ope_node;
-    // private ConcurrentHashMap<BigInteger, BigInteger> encryption_map;
-    // private ConcurrentHashMap<BigInteger, BigInteger> decryption_map;
 
-    public OPE(/*OPE_Cipher cipher*/) {
-        // this.cipher = cipher;
+    public OPE() {
         this.ope_node = new OPE_Node();
-        // this.encryption_map = new ConcurrentHashMap<BigInteger, BigInteger>();
+    }
+
+    public static BigInteger max(BigInteger int1, BigInteger int2) {
+        // TODO: this only works if integers are mapped to integers;
+        // if mapped to strings, will have to read OPE_Node
+        return int1.max(int2);
+    }
+
+    public static BigInteger min(BigInteger int1, BigInteger int2) {
+        // TODO: this only works if integers are mapped to integers;
+        // if mapped to strings, will have to read OPE_Node
+        return int1.min(int2);
     }
     
     private ArrayList<BigInteger> sort(HeapFile hf, int col) throws DbException, TransactionAbortedException {
@@ -80,14 +87,6 @@ public class OPE {
         return values_list;
     }
 
-    /*public BigInteger encrypt(BigInteger val) {
-        return this.cipher.encrypt(val);
-    }
-
-    public BigInteger decrypt(BigInteger val) {
-        return this.cipher.decrypt(val);
-    }*/
-    
     private OPE_Node buildOPETree(ArrayList<BigInteger> values, int start_idx, int end_idx) {
         if (start_idx > end_idx) {
           return null;

@@ -61,7 +61,6 @@ public class EncryptionTest {
         assertEquals(((IntField) tuplePlain.getField(0)).getValue(), paillerKeyPair.decrypt(((BigIntField) tupleEnc.getField(0)).getValue()).intValue());
         assertEquals(((IntField) tuplePlain.getField(1)).getValue(), paillerKeyPair.decrypt(((BigIntField) tupleEnc.getField(1)).getValue()).intValue());
         assertEquals(((IntField) tuplePlain.getField(2)).getValue(), paillerKeyPair.decrypt(((BigIntField) tupleEnc.getField(2)).getValue()).intValue());
-        
         // OPE values
         assertEquals(20, ((IntField) tupleEnc.getField(3)).getValue());
         assertEquals(50, ((IntField) tupleEnc.getField(4)).getValue());

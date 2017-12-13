@@ -1,21 +1,16 @@
 package simpledb;
 
-import java.util.*;
+import java.util.NoSuchElementException;
 
-/**
- * The Aggregation operator that computes an aggregate (e.g., sum, avg, max,
- * min). Note that we only support aggregates over a single column, grouped by a
- * single column.
- */
-public class Aggregate extends Operator {
-
+public class EncryptedAggregate extends Operator {
+    
     private static final long serialVersionUID = 1L;
 
     private OpIterator child;
     private int aField;
     private int gbField;
-    private Aggregator.Op aOprtr;
-    private Aggregator aggr;
+    private EncryptedAggregator.EncOp aOprtr;
+    private EncryptedAggregator aggr;
     private OpIterator aggrIter;
     private TupleDesc tupDesc;
     private OpIterator[] children;
@@ -39,7 +34,7 @@ public class Aggregate extends Operator {
      * @param aop
      *            The aggregation operator to use
      */
-    public Aggregate(OpIterator child, int afield, int gbfield, Aggregator.Op aop) {
+    public EncryptedAggregate(OpIterator child, int afield, int gbfield, EncryptedAggregator.EncOp aop) {
         // some code goes here
         this.child = child;
         this.aField = afield;
@@ -54,13 +49,7 @@ public class Aggregate extends Operator {
         		gbFieldType = null;
         }
         Type aFieldType = this.tupDesc.getFieldType(afield);
-        if (aFieldType == Type.INT_TYPE) {
-        		this.aggr = new IntegerAggregator(gbfield, gbFieldType, afield, aop);
-        } else if (aFieldType == Type.STRING_TYPE) {
-        		this.aggr = new StringAggregator(gbfield, gbFieldType, afield, aop);
-        }/* else { // Encrypted case
-        	  	this.aggr = new EncryptedBigIntegerAggregator(gbfield, gbFieldType, afield, aop);
-        }*/
+        this.aggr = new EncryptedBigIntegerAggregator(gbfield, gbFieldType, afield, aop);
         this.mergeAllTuples(child, this.aggr);
         this.aggrIter = this.aggr.iterator();
     }
@@ -76,7 +65,7 @@ public class Aggregate extends Operator {
      * Merge all tuples of a child OpIterator into their appropriate group
      * @param child the OpIterator feeding tuples
      */
-    private void mergeAllTuples(OpIterator child, Aggregator aggr) {
+    private void mergeAllTuples(OpIterator child, EncryptedAggregator aggr) {
         try {
           child.open();
           while (child.hasNext()) {
@@ -133,12 +122,12 @@ public class Aggregate extends Operator {
     /**
      * @return return the aggregate operator
      **/
-    public Aggregator.Op aggregateOp() {
+    public EncryptedAggregator.EncOp aggregateOp() {
         // some code goes here
         return this.aOprtr;
     }
     
-    public static String nameOfAggregatorOp(Aggregator.Op aop) {
+    public static String nameOfAggregatorOp(EncryptedAggregator.EncOp aop) {
         return aop.toString();
     }
     

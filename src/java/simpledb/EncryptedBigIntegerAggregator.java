@@ -7,14 +7,14 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Knows how to compute some aggregate over a set of encrypted IntFields.
  */
-public class EncryptedBigIntegerAggregator implements Aggregator {
+public class EncryptedBigIntegerAggregator implements EncryptedAggregator {
 
     private static final long serialVersionUID = 1L;
 
     private final int gbfield;
     private final Type gbfieldtype;
     private final int afield;
-    private final Op op;
+    private final EncOp op;
     private final ArrayList<Tuple> results = new ArrayList<Tuple>();
     private final ConcurrentHashMap<Field, BigInteger> gbValues = 
             new ConcurrentHashMap<Field, BigInteger>();
@@ -47,7 +47,7 @@ public class EncryptedBigIntegerAggregator implements Aggregator {
      * then hand this to the client to decrypt with the appropriate KeyPair
      */
 
-    public EncryptedBigIntegerAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
+    public EncryptedBigIntegerAggregator(int gbfield, Type gbfieldtype, int afield, EncOp what) {
         this.gbfield = gbfield;
         this.gbfieldtype = gbfieldtype;
         this.afield = afield;
@@ -83,7 +83,7 @@ public class EncryptedBigIntegerAggregator implements Aggregator {
         BigInteger aggVal = BigInteger.valueOf(((IntField) tup.getField(afield)).getValue());
         
         if (!gbValues.containsKey(gbField)) {
-            gbValues.put(gbField, op.equals(Op.COUNT) ? BigInteger.valueOf(1) : aggVal);
+            gbValues.put(gbField, op.equals(EncOp.COUNT) ? BigInteger.valueOf(1) : aggVal);
             avgCount.putIfAbsent(gbField, BigInteger.valueOf(1));
         } else {            
             BigInteger prevVal = gbValues.get(gbField);
@@ -112,11 +112,11 @@ public class EncryptedBigIntegerAggregator implements Aggregator {
                 break;
             case OPE_MIN:
                 // TODO: Replace with OPE implementation
-                gbValues.put(gbField, prevVal.min(aggVal));
+                gbValues.put(gbField, OPE.min(prevVal, aggVal));
                 break;
             case OPE_MAX:
                 // TODO: Replace with OPE implementation
-                gbValues.put(gbField, prevVal.max(aggVal));
+                gbValues.put(gbField, OPE.max(prevVal, aggVal));
                 break;
             case COUNT:
                 gbValues.put(gbField, prevVal.add(BigInteger.ONE));
@@ -145,7 +145,7 @@ public class EncryptedBigIntegerAggregator implements Aggregator {
             BigInteger value = (BigInteger) gbValues.get(new IntField(gbfield));
             
             // Multiply by one over count to divide TODO: Test that this works
-            if (op.equals(Op.PAILLIER_AVG)) {
+            if (op.equals(EncOp.PAILLIER_AVG)) {
                 value = Paillier.constMult(value, BigInteger.ONE.divide(avgCount.get(gb)), publicKey);
             }
             t.setField(0, new IntField(value.intValueExact()));
@@ -160,7 +160,7 @@ public class EncryptedBigIntegerAggregator implements Aggregator {
                 BigInteger value = gbValues.get(gb);
 
                 // TODO: Make sure this still works with Paillier
-                if (op.equals(Op.PAILLIER_AVG)) {
+                if (op.equals(EncOp.PAILLIER_AVG)) {
                     value = Paillier.constMult(value, BigInteger.ONE.divide(avgCount.get(gb)), publicKey);
                 }
                 t.setField(0, gb);
