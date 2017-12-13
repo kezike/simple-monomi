@@ -38,6 +38,8 @@ public class EncryptionTest {
         paillierKeyGen.upperBound(BigInteger.valueOf(Integer.MAX_VALUE));
         paillierKeyGen.bits(HeapFile.BITS_INTEGER);
         Paillier_KeyPair paillerKeyPair = paillierKeyGen.generateKeyPair();
+        Paillier_PublicKey paillierPublicKey = paillerKeyPair.getPublicKey();
+        Paillier_PrivateKey paillierPrivateKey = paillerKeyPair.getPrivateKey();
         OPE_CipherPrivate opeCipherPrivate = new OPE_CipherPrivate.Mult(BigInteger.valueOf(5));
         OPE_CipherPublic opeCipherPublic = new OPE_CipherPublic.Mult(BigInteger.valueOf(5));
         OPE_PrivateKey opePrivateKey = new OPE_PrivateKey(opeCipherPrivate);
@@ -51,18 +53,33 @@ public class EncryptionTest {
         DbFileIterator tableEncIter = tableEnc.iterator(new TransactionId());
         tableEncIter.open();
         Tuple tupleEnc;
-        // Testing first-row OPE values
+        // Testing first-row encrypted values
         tupleEnc = tableEncIter.next();
+        // Paillier values
+        assertEquals(paillierPublicKey.encrypt(BigInteger.valueOf(4)), ((IntField) tupleEnc.getField(0)).getValue());
+        assertEquals(paillierPublicKey.encrypt(BigInteger.valueOf(10)), ((IntField) tupleEnc.getField(1)).getValue());
+        assertEquals(paillierPublicKey.encrypt(BigInteger.valueOf(6)), ((IntField) tupleEnc.getField(2)).getValue());
+        // OPE values
         assertEquals(20, ((IntField) tupleEnc.getField(3)).getValue());
         assertEquals(50, ((IntField) tupleEnc.getField(4)).getValue());
         assertEquals(30, ((IntField) tupleEnc.getField(5)).getValue());
-        // Testing second-row OPE values
+        // Testing second-row encrypted values
         tupleEnc = tableEncIter.next();
+        // Paillier values
+        assertEquals(paillierPublicKey.encrypt(BigInteger.valueOf(7)), ((IntField) tupleEnc.getField(0)).getValue());
+        assertEquals(paillierPublicKey.encrypt(BigInteger.ONE), ((IntField) tupleEnc.getField(1)).getValue());
+        assertEquals(paillierPublicKey.encrypt(BigInteger.valueOf(15)), ((IntField) tupleEnc.getField(2)).getValue());
+        // OPE values
         assertEquals(35, ((IntField) tupleEnc.getField(3)).getValue());
         assertEquals(5, ((IntField) tupleEnc.getField(4)).getValue());
         assertEquals(75, ((IntField) tupleEnc.getField(5)).getValue());
-        // Testing third-row OPE values
+        // Testing third-row encrypted values
         tupleEnc = tableEncIter.next();
+        // Paillier values
+        assertEquals(paillierPublicKey.encrypt(BigInteger.valueOf(2)), ((IntField) tupleEnc.getField(0)).getValue());
+        assertEquals(paillierPublicKey.encrypt(BigInteger.valueOf(5)), ((IntField) tupleEnc.getField(1)).getValue());
+        assertEquals(paillierPublicKey.encrypt(BigInteger.valueOf(8)), ((IntField) tupleEnc.getField(2)).getValue());
+        // OPE values
         assertEquals(10, ((IntField) tupleEnc.getField(3)).getValue());
         assertEquals(25, ((IntField) tupleEnc.getField(4)).getValue());
         assertEquals(40, ((IntField) tupleEnc.getField(5)).getValue());
