@@ -13,7 +13,7 @@ public class OPE_KeyPair implements KeyPair, Serializable {
     private final OPE_PrivateKey privateKey;
     private final OPE_PublicKey publicKey;
 
-    OPE_KeyPair(OPE_PrivateKey privateKey, OPE_PublicKey publicKey) {
+    public OPE_KeyPair(OPE_PrivateKey privateKey, OPE_PublicKey publicKey) {
         this.privateKey = privateKey;
         this.publicKey = publicKey;
     }

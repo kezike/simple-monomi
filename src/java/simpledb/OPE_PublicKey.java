@@ -11,7 +11,7 @@ import java.util.Random;
 public class OPE_PublicKey implements PublicKey, Serializable {
     private OPE_CipherPublic cipher;
 
-    OPE_PublicKey(OPE_CipherPublic cipher) {
+    public OPE_PublicKey(OPE_CipherPublic cipher) {
         this.cipher = cipher;
     }
 

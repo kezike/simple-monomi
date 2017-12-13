@@ -28,7 +28,6 @@ public class EncryptionTest {
         catalog.addTable(this.table, "ope_test");
     }
 
-    /*
     @Test
     public void testEncrypt() throws IOException, DbException, TransactionAbortedException {
         long startTime = System.nanoTime();
@@ -329,7 +328,11 @@ public class EncryptionTest {
     public void test100r100c() throws Exception{
         encryptNRowsMColumns(100,100);   
     }
-
+    
+    /*@Test
+    public void test1000r100c() throws Exception{
+        encryptNRowsMColumns(1000,100);   
+    }*/
     
     /**
      * JUnit suite target

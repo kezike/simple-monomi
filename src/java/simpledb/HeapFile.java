@@ -308,9 +308,9 @@ public class HeapFile implements DbFile {
     /**
      * Takes the contents of the encrypted file with Paillier-encrypted columns, OPE-encrypted columns
      * and decrypts to the original plain file format.
-     * @return An EncryptedFile that contains the encrypted contents of this HeapFile
+     * @return A HeapFile that contains the decrypted contents of the EncryptedFile
      */
-    public HeapFile decrypt(ConcurrentHashMap<String, KeyPair> keyPairs, String decryptionPrefix)
+    /*public HeapFile decrypt(ConcurrentHashMap<String, KeyPair> keyPairs, String decryptionPrefix)
         throws IOException, DbException, 
         TransactionAbortedException {
         // TODO: Apply the relevant encryption schemes to each tuple in each page
@@ -443,7 +443,7 @@ public class HeapFile implements DbFile {
 
         hfi.close();
         return decF;
-    }
+    }*/
 
     /**
      * Takes the contents of this file and applies Paillier and Order-Preserving

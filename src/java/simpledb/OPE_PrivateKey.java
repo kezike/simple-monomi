@@ -7,10 +7,10 @@ import java.math.BigInteger;
  * A class that represents the private part of the OPE key pair.
  * 
  */
-class OPE_PrivateKey implements PrivateKey, Serializable {
+public class OPE_PrivateKey implements PrivateKey, Serializable {
     private final OPE_CipherPrivate cipher;
 
-    OPE_PrivateKey(OPE_CipherPrivate cipher) {
+    public OPE_PrivateKey(OPE_CipherPrivate cipher) {
         this.cipher = cipher;
     }
 
