@@ -20,11 +20,6 @@ public class OPETest {
     private OPE_CipherPublic.Line line_3_1_pub;
     private OPE_CipherPrivate.Line line_3_1_priv;
 
-    // private OPE ope_add_15;
-    // private OPE ope_sub_3;
-    // private OPE ope_mult_7;
-    // private OPE ope_line_3_1;
-
     private HeapFile table;
     private DbFileIterator table_iter;
 
@@ -32,7 +27,7 @@ public class OPETest {
      * Initialize each OPE unit test
      */
     @Before
-    public void setupOPETest() throws Exception {
+    public void setupOPETest() {
         this.add_15_pub = new OPE_CipherPublic.Add(BigInteger.valueOf(15));
         this.add_15_priv = new OPE_CipherPrivate.Add(BigInteger.valueOf(15));
         this.sub_3_pub = new OPE_CipherPublic.Sub(BigInteger.valueOf(3));
@@ -41,11 +36,6 @@ public class OPETest {
         this.mult_7_priv = new OPE_CipherPrivate.Mult(BigInteger.valueOf(7));
         this.line_3_1_pub = new OPE_CipherPublic.Line(BigInteger.valueOf(3), BigInteger.ONE);
         this.line_3_1_priv = new OPE_CipherPrivate.Line(BigInteger.valueOf(3), BigInteger.ONE);
-
-        // this.ope_add_15 = new OPE(add_15);
-        // this.ope_sub_3 = new OPE(sub_3);
-        // this.ope_mult_7 = new OPE(mult_7);
-        // this.ope_line_3_1 = new OPE(line_3_1);
 
         Type types[] = new Type[]{ Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE };
         String names[] = new String[]{ "field0", "field1", "field2" };

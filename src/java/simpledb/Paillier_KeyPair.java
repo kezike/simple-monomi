@@ -8,7 +8,7 @@ import java.math.BigInteger;
  * 
  * Borrowed from https://github.com/kunerd/jpaillier
  */
-public class Paillier_KeyPair implements Serializable {
+public class Paillier_KeyPair implements KeyPair, Serializable {
 
     private final Paillier_PrivateKey privateKey;
     private final Paillier_PublicKey publicKey;

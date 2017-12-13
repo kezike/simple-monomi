@@ -1,5 +1,6 @@
 package simpledb;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
 /**
@@ -11,7 +12,7 @@ public interface OPE_CipherPublic {
    /**
     * An addition implementation of the OPE_CipherPublic interface
     */
-   public class Add implements OPE_CipherPublic {
+   public class Add implements OPE_CipherPublic, Serializable {
       private BigInteger cipher;
 
       public Add(BigInteger cipher) {
@@ -26,7 +27,7 @@ public interface OPE_CipherPublic {
    /**
     * A subtraction implementation of the OPE_CipherPublic interface
     */
-   public class Sub implements OPE_CipherPublic {
+   public class Sub implements OPE_CipherPublic, Serializable {
       private BigInteger cipher;
 
       public Sub(BigInteger cipher) {
@@ -41,7 +42,7 @@ public interface OPE_CipherPublic {
    /**
     * A multiplication implementation of the OPE_CipherPublic interface
     */
-   public class Mult implements OPE_CipherPublic {
+   public class Mult implements OPE_CipherPublic, Serializable {
       private BigInteger cipher;
 
       public Mult(BigInteger cipher) {
@@ -56,7 +57,7 @@ public interface OPE_CipherPublic {
    /**
     * A linear implementation of the OPE_CipherPublic interface
     */
-   public class Line implements OPE_CipherPublic {
+   public class Line implements OPE_CipherPublic, Serializable {
       private BigInteger cipher_slope;
       private BigInteger cipher_y_int;
 
