@@ -11,6 +11,7 @@ import junit.framework.JUnit4TestAdapter;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -80,7 +81,8 @@ public class EncryptedQueryTest {
     @Test
     public void testEndToEndOPEQueryMax() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
         // Construct the query
-        System.out.println("Query: SELECT OPE_MAX(b) FROM end_to_end_enc_test_enc");
+    	System.out.println("Original Query: SELECT MAX(b) FROM end_to_end_enc_test");
+        System.out.println("Encrypted Query: SELECT OPE_MAX(OPE_b) FROM end_to_end_enc_test_enc");
     	TransactionId tid = new TransactionId();
         SeqScan seqScan = new SeqScan(tid, this.tableEnc.getId());
         String col = "b";
@@ -99,7 +101,8 @@ public class EncryptedQueryTest {
     @Test
     public void testEndToEndOPEQueryMin() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
         // Construct the query
-    	System.out.println("Query: SELECT OPE_MIN(c) FROM end_to_end_enc_test_enc");
+    	System.out.println("Original Query: SELECT MIN(c) FROM end_to_end_enc_test");
+    	System.out.println("Encrypted Query: SELECT OPE_MIN(OPE_c) FROM end_to_end_enc_test_enc");
         TransactionId tid = new TransactionId();
         SeqScan seqScan = new SeqScan(tid, this.tableEnc.getId());
         String col = "c";
@@ -112,5 +115,40 @@ public class EncryptedQueryTest {
         min.close();
         Database.getBufferPool().transactionComplete(tid);
         System.out.println("MIN(" + col + "): " + this.opePrivateKey.decrypt(BigInteger.valueOf(((IntField) tupleMin.getField(0)).getValue())) + '\n');
+        System.out.println("------------------------------------------------------------------------------------------------------------------------------------------------------");
+    }
+    
+    @Test
+    public void testEndToEndOPEQueryFilter() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
+        // Construct the query
+    	System.out.println("Original Query: SELECT a FROM end_to_end_enc_test WHERE a > 30");
+    	System.out.println("Encrypted Query: SELECT OPE_a FROM end_to_end_enc_test_enc WHERE OPE_a > 150");
+        TransactionId tid = new TransactionId();
+        String col = "a";
+        int fieldIdx = this.tableEnc.getTupleDesc().fieldNameToIndex(HeapFile.OPE_PREFIX + col);
+        int boundEnc = this.opePublicKey.encrypt(BigInteger.valueOf(30)).intValue();
+        IntField intField = new IntField(boundEnc);
+        SeqScan seqScan = new SeqScan(tid, this.tableEnc.getId());
+        Predicate pred = new Predicate(fieldIdx, Predicate.Op.GREATER_THAN, intField);
+        Filter filter = new Filter(pred, seqScan);
+        Tuple tuple;
+        filter.open();
+        System.out.println("Encrypted Results");
+        HashSet<BigInteger> results = new HashSet<BigInteger>();
+        while (filter.hasNext()) {
+          tuple = filter.next();
+          int resultVal = ((IntField) tuple.getField(fieldIdx)).getValue();
+          BigInteger result = BigInteger.valueOf(resultVal);
+          if (!results.contains(result)) {
+            System.out.println(result);
+          }
+          results.add(result);
+        }
+        filter.close();
+        Database.getBufferPool().transactionComplete(tid);
+        System.out.println("Decrypted Results");
+        for (BigInteger result : results) {
+          System.out.println(this.opePrivateKey.decrypt(result).intValue());
+        }
     }
 }
