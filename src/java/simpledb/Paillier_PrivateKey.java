@@ -8,7 +8,7 @@ import java.math.BigInteger;
  * 
  * Borrowed from https://github.com/kunerd/jpaillier
  */
-class Paillier_PrivateKey implements PrivateKey, Serializable {
+public class Paillier_PrivateKey implements PrivateKey, Serializable {
 
     private final BigInteger lambda;
     private final BigInteger preCalculatedDenominator;

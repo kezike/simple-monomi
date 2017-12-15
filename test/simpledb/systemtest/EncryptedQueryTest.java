@@ -79,9 +79,28 @@ public class EncryptedQueryTest {
     }
     
     @Test
+    public void testEndToEndPaillierQuerySum() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
+    	// Construct the query
+    	System.out.println("Encrypted Query: SELECT PAILLIER_SUM(PAILLIER_a) FROM end_to_end_enc_test_enc");
+    	TransactionId tid = new TransactionId();
+    	SeqScan seqScan = new SeqScan(tid, this.tableEnc.getId());
+    	String col = "a";
+    	int fieldIdx = this.tableEnc.getTupleDesc().fieldNameToIndex(HeapFile.PAILLIER_PREFIX + col);
+    	EncryptedAggregate sum = new EncryptedAggregate(seqScan, fieldIdx, Aggregator.NO_GROUPING, EncryptedAggregator.EncOp.PAILLIER_SUM);
+    	Tuple tupleSum;
+    	sum.open();
+    	tupleSum = sum.next();
+    	System.out.println(HeapFile.PAILLIER_PREFIX + "SUM(" + col + "): " + tupleSum);
+    	sum.close();
+        Database.getBufferPool().transactionComplete(tid);
+        System.out.println("SUM(" + col + "): " + this.paillerKeyPair.decrypt(BigInteger.valueOf(((IntField) tupleSum.getField(0)).getValue())) + '\n');
+        System.out.println("------------------------------------------------------------------------------------------------------------------------------------------------------");
+    }
+    
+    @Test
     public void testEndToEndOPEQueryMax() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
         // Construct the query
-    	System.out.println("Original Query: SELECT MAX(b) FROM end_to_end_enc_test");
+    	// System.out.println("Original Query: SELECT MAX(b) FROM end_to_end_enc_test");
         System.out.println("Encrypted Query: SELECT OPE_MAX(OPE_b) FROM end_to_end_enc_test_enc");
     	TransactionId tid = new TransactionId();
         SeqScan seqScan = new SeqScan(tid, this.tableEnc.getId());
@@ -151,6 +170,23 @@ public class EncryptedQueryTest {
           System.out.println(this.opePrivateKey.decrypt(result).intValue());
         }
     }
+
+    @Test
+    public void testEndToEndQuerySum() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
+    	// Construct the query
+    	System.out.println("Encrypted Query: SELECT PAILLIER_SUM(PAILLIER_a) FROM end_to_end_enc_test_enc");
+    	TransactionId tid = new TransactionId();
+    	SeqScan seqScan = new SeqScan(tid, this.table.getId());
+    	String col = "a";
+    	int fieldIdx = this.table.getTupleDesc().fieldNameToIndex(col);
+    	Aggregate sum = new Aggregate(seqScan, fieldIdx, Aggregator.NO_GROUPING, EncryptedAggregator.EncOp.SUM);
+    	Tuple tupleSum;
+    	sum.open();
+    	tupleSum = sum.next();
+    	System.out.println("SUM(" + col + "): " + tupleSum);
+    	sum.close();
+        Database.getBufferPool().transactionComplete(tid);
+    }
     
     @Test
     public void testEndToEndQueryMax() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
@@ -199,22 +235,3 @@ public class EncryptedQueryTest {
         int bound = 30;
         IntField intField = new IntField(bound);
         SeqScan seqScan = new SeqScan(tid, this.table.getId());
-        Predicate pred = new Predicate(fieldIdx, Predicate.Op.GREATER_THAN, intField);
-        Filter filter = new Filter(pred, seqScan);
-        Tuple tuple;
-        filter.open();
-        System.out.println("Results");
-        HashSet<BigInteger> results = new HashSet<BigInteger>();
-        while (filter.hasNext()) {
-          tuple = filter.next();
-          int resultVal = ((IntField) tuple.getField(fieldIdx)).getValue();
-          BigInteger result = BigInteger.valueOf(resultVal);
-          if (!results.contains(result)) {
-            System.out.println(result);
-          }
-          results.add(result);
-        }
-        filter.close();
-        Database.getBufferPool().transactionComplete(tid);
-    }
-}
