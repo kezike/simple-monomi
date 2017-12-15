@@ -28,7 +28,7 @@ public class EncryptionTest {
         catalog.addTable(this.table, "ope_test");
     }
 
-    @Test
+    /*@Test
     public void testEncrypt() throws IOException, DbException, TransactionAbortedException {
         long startTime = System.nanoTime();
         ConcurrentHashMap<String, KeyPair> keyPairs = new ConcurrentHashMap<String, KeyPair>();
@@ -103,9 +103,9 @@ public class EncryptionTest {
         long endTime = System.nanoTime();
         long duration = (endTime - startTime);  //divide by 1000000 to get milliseconds.
         System.out.println("Test runtime: " + duration/1000000 + " ms");
-    }
-    /*
-    @Test
+    }*/
+    
+    /*@Test
     public void testLongEncrypt() throws Exception {
         long million = 1000000;
         long startTime = System.nanoTime();
@@ -192,9 +192,9 @@ public class EncryptionTest {
         long duration = (endTime - startTime);  //divide by 1000000 to get milliseconds.
         System.out.println("Test runtime: " + duration/million + " ms");
 
-    }
-*/
-    @Test
+    }*/
+    
+    /*@Test
     public void testMediumEncrypt() throws Exception {
         long million = 1000000;
         int rows = 10;
@@ -237,7 +237,7 @@ public class EncryptionTest {
         long duration = (endTime - startTime);  //divide by 1000000 to get milliseconds.
         System.out.println("Test "+rows+" "+cols+" runtime: " + duration/million + " ms\n");
 
-    }
+    }*/
 
     public void encryptNRowsMColumns(int rows, int cols) throws Exception {
         long million = 1000000;
@@ -306,8 +306,8 @@ public class EncryptionTest {
         encryptNRowsMColumns(10,1);   
     }
     @Test
-    public void test10r10c() throws Exception{
-        encryptNRowsMColumns(10,10);   
+    public void test10r5c() throws Exception{
+        encryptNRowsMColumns(10,5);   
     }
     @Test
     public void test1r100c() throws Exception{
@@ -315,13 +315,23 @@ public class EncryptionTest {
     }
 
     @Test
-    public void test100r10c() throws Exception{
+    public void test100r1c() throws Exception{
         encryptNRowsMColumns(100,1);   
     }
     
     @Test
     public void test20r20c() throws Exception{
         encryptNRowsMColumns(20,20);   
+    }
+    
+    @Test
+    public void test10r20c() throws Exception{
+        encryptNRowsMColumns(10,20);   
+    }
+    
+    @Test
+    public void test10r100c() throws Exception{
+        encryptNRowsMColumns(10,100);   
     }
 
     /*@Test

@@ -101,7 +101,7 @@ public class EncryptedQueryTest {
     @Test
     public void testEndToEndOPEQueryMin() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
         // Construct the query
-    	System.out.println("Original Query: SELECT MIN(c) FROM end_to_end_enc_test");
+    	// System.out.println("Original Query: SELECT MIN(c) FROM end_to_end_enc_test");
     	System.out.println("Encrypted Query: SELECT OPE_MIN(OPE_c) FROM end_to_end_enc_test_enc");
         TransactionId tid = new TransactionId();
         SeqScan seqScan = new SeqScan(tid, this.tableEnc.getId());
@@ -117,11 +117,11 @@ public class EncryptedQueryTest {
         System.out.println("MIN(" + col + "): " + this.opePrivateKey.decrypt(BigInteger.valueOf(((IntField) tupleMin.getField(0)).getValue())) + '\n');
         System.out.println("------------------------------------------------------------------------------------------------------------------------------------------------------");
     }
-    
+        
     @Test
     public void testEndToEndOPEQueryFilter() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
         // Construct the query
-    	System.out.println("Original Query: SELECT a FROM end_to_end_enc_test WHERE a > 30");
+    	// System.out.println("Original Query: SELECT a FROM end_to_end_enc_test WHERE a > 30");
     	System.out.println("Encrypted Query: SELECT OPE_a FROM end_to_end_enc_test_enc WHERE OPE_a > 150");
         TransactionId tid = new TransactionId();
         String col = "a";
@@ -150,5 +150,71 @@ public class EncryptedQueryTest {
         for (BigInteger result : results) {
           System.out.println(this.opePrivateKey.decrypt(result).intValue());
         }
+    }
+    
+    @Test
+    public void testEndToEndQueryMax() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
+        // Construct the query
+    	System.out.println("Original Query: SELECT MAX(b) FROM end_to_end_enc_test");
+        // System.out.println("Encrypted Query: SELECT OPE_MAX(OPE_b) FROM end_to_end_enc_test_enc");
+    	TransactionId tid = new TransactionId();
+        SeqScan seqScan = new SeqScan(tid, this.table.getId());
+        String col = "b";
+        int fieldIdx = this.table.getTupleDesc().fieldNameToIndex(col);
+        Aggregate max = new Aggregate(seqScan, fieldIdx, Aggregator.NO_GROUPING, Aggregator.Op.MAX);
+        Tuple tupleMax;
+        max.open();
+        tupleMax = max.next();
+        System.out.println("MAX(" + col + "): " + tupleMax);
+        max.close();
+        Database.getBufferPool().transactionComplete(tid);
+    }
+    
+    @Test
+    public void testEndToEndQueryMin() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
+        // Construct the query
+    	System.out.println("Original Query: SELECT MIN(c) FROM end_to_end_enc_test");
+    	// System.out.println("Encrypted Query: SELECT OPE_MIN(OPE_c) FROM end_to_end_enc_test_enc");
+        TransactionId tid = new TransactionId();
+        SeqScan seqScan = new SeqScan(tid, this.table.getId());
+        String col = "c";
+        int fieldIdx = this.table.getTupleDesc().fieldNameToIndex(col);
+        Aggregate min = new Aggregate(seqScan, fieldIdx, Aggregator.NO_GROUPING, Aggregator.Op.MIN);
+        Tuple tupleMin;
+        min.open();
+        tupleMin = min.next();
+        System.out.println("MIN(" + col + "): " + tupleMin);
+        min.close();
+        Database.getBufferPool().transactionComplete(tid);
+    }
+    
+    @Test
+    public void testEndToEndQueryFilter() throws NoSuchElementException, DbException, TransactionAbortedException, IOException {
+        // Construct the query
+    	System.out.println("Original Query: SELECT a FROM end_to_end_enc_test WHERE a > 30");
+    	// System.out.println("Encrypted Query: SELECT OPE_a FROM end_to_end_enc_test_enc WHERE OPE_a > 150");
+        TransactionId tid = new TransactionId();
+        String col = "a";
+        int fieldIdx = this.table.getTupleDesc().fieldNameToIndex(col);
+        int bound = 30;
+        IntField intField = new IntField(bound);
+        SeqScan seqScan = new SeqScan(tid, this.table.getId());
+        Predicate pred = new Predicate(fieldIdx, Predicate.Op.GREATER_THAN, intField);
+        Filter filter = new Filter(pred, seqScan);
+        Tuple tuple;
+        filter.open();
+        System.out.println("Results");
+        HashSet<BigInteger> results = new HashSet<BigInteger>();
+        while (filter.hasNext()) {
+          tuple = filter.next();
+          int resultVal = ((IntField) tuple.getField(fieldIdx)).getValue();
+          BigInteger result = BigInteger.valueOf(resultVal);
+          if (!results.contains(result)) {
+            System.out.println(result);
+          }
+          results.add(result);
+        }
+        filter.close();
+        Database.getBufferPool().transactionComplete(tid);
     }
 }
